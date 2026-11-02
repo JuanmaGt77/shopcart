@@ -200,7 +200,7 @@ Cliente HTTP / WebSocket
 │ db/ejecutor.ts   ÚNICO punto que habla con SQL Server (RPC, sin texto SQL).            │
 └────────┼───────────────────────────────────────────────────────────────────────────────┘
          ▼
-SQL Server: 88 stored procedures · 9 funciones · 7 vistas · 10 triggers · 31 tablas
+SQL Server: 88 stored procedures · 11 funciones tipo tabla · 7 vistas · 10 triggers · 31 tablas
 ```
 
 Los errores de cualquier capa llegan a un **manejador central** que siempre responde con el mismo formato. Los servicios publican **eventos de dominio** (por ejemplo "se creó un pedido") después de que la base confirmó; los escuchan el módulo de tiempo real (WebSocket) y la caché de reportes, así los servicios no dependen de ninguno de los dos.
