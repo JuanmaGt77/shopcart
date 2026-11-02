@@ -109,7 +109,9 @@ export class Modulo {
         res.status(204).end();
         return;
       }
-      res.status(definicion.estado ?? 200).json(resultado);
+      // Un controlador puede decidir el código (por ejemplo 200 en vez de 201 si fue un reintento)
+      const estado = typeof res.locals['estado'] === 'number' ? res.locals['estado'] : (definicion.estado ?? 200);
+      res.status(estado).json(resultado);
     };
 
     this.router[definicion.metodo](
