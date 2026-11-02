@@ -42,5 +42,30 @@ services:
       - ./database:/database:ro
     restart: "no"
 
+  # API (Node 24 + Express). Arranca cuando la base ya terminó de crearse.
+  api:
+    build: ./backend
+    container_name: shopcart-api
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DB_HOST: db
+      DB_PORT: "1433"
+      DB_NAME: ${DB_NAME:-ShopCart}
+      DB_USER: ${DB_APP_USER:-shopcart_app}
+      DB_PASSWORD: ${DB_APP_PASSWORD}
+      DB_ENCRYPT: "false"
+      DB_TRUST_SERVER_CERTIFICATE: "true"
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Define JWT_ACCESS_SECRET en el archivo .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      # En local se usa http; con HTTPS en producción va en true
+      COOKIE_SECURE: "false"
+    ports:
+      - "${API_PORT:-3000}:3000"
+    restart: unless-stopped
+
 volumes:
   shopcart-sqldata:

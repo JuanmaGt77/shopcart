@@ -53,12 +53,12 @@ if (!resultado.success) {
   process.exit(1);
 }
 
-if (
-  resultado.data.NODE_ENV === 'production' &&
-  resultado.data.JWT_ACCESS_SECRET.startsWith('cambia-este-secreto')
-) {
-  console.error('En producción hay que definir un JWT_ACCESS_SECRET propio.');
-  process.exit(1);
+// Se permite arrancar con el secreto de ejemplo para que el proyecto corra recién clonado,
+// pero se avisa fuerte: antes de publicar la API hay que definir uno propio.
+if (resultado.data.JWT_ACCESS_SECRET.startsWith('cambia-este-secreto')) {
+  console.warn(
+    'AVISO: estás usando el JWT_ACCESS_SECRET de ejemplo. Sirve para probar en local, pero cámbialo antes de publicar la API.',
+  );
 }
 
 export const env = resultado.data;
