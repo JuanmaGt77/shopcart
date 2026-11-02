@@ -11,6 +11,8 @@ export interface DatosToken {
   id: number;
   rol: Rol;
   correo: string;
+  /** Segundos desde 1970 en que vence (solo al verificar) */
+  expira?: number | undefined;
 }
 
 /** Access token de corta duración (15 min por defecto), firmado con HS256. */
@@ -38,7 +40,7 @@ export function verificarAccessToken(token: string): DatosToken {
 
     const id = Number(datos.sub);
     if (!Number.isInteger(id) || id <= 0) throw new Error('Sujeto inválido');
-    return { id, rol: datos['rol'] as Rol, correo: String(datos['correo'] ?? '') };
+    return { id, rol: datos['rol'] as Rol, correo: String(datos['correo'] ?? ''), expira: datos.exp };
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
       throw new ErrorNoAutenticado('TOKEN_EXPIRADO', 'Tu sesión expiró. Renueva el token para continuar.');

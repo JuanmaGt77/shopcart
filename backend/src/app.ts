@@ -12,7 +12,17 @@ import type { Modulo } from './compartido/http/modulo.js';
 import { manejadorErrores, rutaNoEncontrada } from './compartido/middlewares/manejador-errores.js';
 import { generarOpenAPI } from './docs/openapi.js';
 import { rutasAuth } from './modulos/auth/auth.rutas.js';
+import { rutasBitacora } from './modulos/bitacora/bitacora.rutas.js';
+import { rutasCarrito } from './modulos/carrito/carrito.rutas.js';
+import { rutasAtributos, rutasCategorias, rutasProductos, rutasVariantes } from './modulos/catalogo/catalogo.rutas.js';
+import { rutasCheckout } from './modulos/checkout/checkout.rutas.js';
+import { rutasCupones } from './modulos/cupones/cupones.rutas.js';
+import { rutasDirecciones } from './modulos/direcciones/direcciones.rutas.js';
+import { rutasInventario } from './modulos/inventario/inventario.rutas.js';
+import { rutasPedidos } from './modulos/pedidos/pedidos.rutas.js';
+import { rutasReportes } from './modulos/reportes/reportes.rutas.js';
 import { rutasCatalogosGenerales, rutasParametros, rutasSalud } from './modulos/sistema/sistema.rutas.js';
+import { rutasUsuarios } from './modulos/usuarios/usuarios.rutas.js';
 
 export interface OpcionesApp {
   limiteLogin?: number;
@@ -26,6 +36,19 @@ export function crearModulos(opciones: OpcionesApp = {}): Modulo[] {
       limiteLogin: opciones.limiteLogin ?? env.RATE_LIMIT_LOGIN,
       limiteRegistro: opciones.limiteRegistro ?? env.RATE_LIMIT_REGISTRO,
     }),
+    rutasUsuarios(),
+    rutasCategorias(),
+    rutasProductos(),
+    rutasVariantes(),
+    rutasAtributos(),
+    rutasInventario(),
+    rutasDirecciones(),
+    rutasCarrito(),
+    rutasCupones(),
+    rutasCheckout(),
+    rutasPedidos(),
+    rutasReportes(),
+    rutasBitacora(),
     rutasCatalogosGenerales(),
     rutasParametros(),
   ];
