@@ -13,8 +13,9 @@ export default tseslint.config(
     },
   },
   {
-    // Los scripts de consola (setup de la base y demos) sí imprimen en pantalla
+    // Los scripts de consola (setup de la base y demos) imprimen en pantalla y leen el JSON
+    // de la API sin tipar; el código de la API (src/) sí tiene todo tipado
     files: ['scripts/**/*.ts'],
-    rules: { 'no-console': 'off' },
+    rules: { 'no-console': 'off', '@typescript-eslint/no-explicit-any': 'off' },
   },
 );

@@ -22,7 +22,7 @@ export const color = {
 
 export interface Respuesta {
   estado: number;
-  cuerpo: { datos?: any; error?: { codigo: string; mensaje: string } } | null;
+  cuerpo: { datos?: any; paginacion?: any; error?: { codigo: string; mensaje: string } } | null;
 }
 
 export async function api(
