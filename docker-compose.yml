@@ -1,0 +1,46 @@
+name: shopcart
+
+services:
+  # SQL Server 2022 (la base corre en nivel de compatibilidad 150 = SQL Server 2019)
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: shopcart-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${DB_SA_PASSWORD:?Define DB_SA_PASSWORD en el archivo .env}
+      TZ: UTC
+    ports:
+      - "${DB_PORT:-1433}:1433"
+    volumes:
+      - shopcart-sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -b -Q 'SELECT 1' -o /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  # Corre los scripts numerados de database/scripts. Si la base ya existe no hace nada;
+  # para recrearla desde cero: docker compose run --rm db-init --reset
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["bash", "/database/run-all.sh"]
+    command: []
+    environment:
+      DB_HOST: db
+      DB_PORT: "1433"
+      DB_NAME: ${DB_NAME:-ShopCart}
+      DB_SA_USER: sa
+      DB_SA_PASSWORD: ${DB_SA_PASSWORD}
+      DB_APP_USER: ${DB_APP_USER:-shopcart_app}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:?Define DB_APP_PASSWORD en el archivo .env}
+    volumes:
+      - ./database:/database:ro
+    restart: "no"
+
+volumes:
+  shopcart-sqldata:

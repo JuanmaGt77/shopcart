@@ -1,0 +1,6 @@
+# Todo en LF para que los scripts .sh funcionen igual en Windows, Mac y dentro de Docker
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.pdf binary
