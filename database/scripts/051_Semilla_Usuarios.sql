@@ -29,32 +29,33 @@ DECLARE @Inicio DATETIME2(3) = DATEADD(DAY, -120, SYSUTCDATETIME());
 INSERT INTO dbo.Usuario (IDRol, Correo, HashContrasena, Nombres, Apellidos, Telefono, FechaCreacion)
 SELECT r.IDRol, u.Correo, u.Hash, u.Nombres, u.Apellidos, u.Telefono, DATEADD(DAY, u.DiaAlta, @Inicio)
 FROM (VALUES
-    ('ADMIN',    N'admin@shopcart.test',              @HashAdmin,    N'Andrea',       N'Morales Castillo', '5550-1001', 0),
-    ('OPERADOR', N'operador@shopcart.test',           @HashOperador, N'Luis Fernando', N'Hernández',       '5550-1002', 0),
-    ('OPERADOR', N'bodega@shopcart.test',             @HashOperador, N'Kevin',        N'Monterroso',       '5550-1003', 5),
-    ('CLIENTE',  N'cliente@shopcart.test',            @HashCliente,  N'Juan Manuel',  N'García',           '5512-3344', 2),
-    ('CLIENTE',  N'maria.lopez@shopcart.test',        @HashCliente,  N'María José',   N'López',            '4123-8890', 3),
-    ('CLIENTE',  N'jc.perez@shopcart.test',           @HashCliente,  N'Juan Carlos',  N'Pérez',            '5876-2210', 4),
-    ('CLIENTE',  N'ana.morales@shopcart.test',        @HashCliente,  N'Ana Lucía',    N'Morales',          '3011-4567', 6),
-    ('CLIENTE',  N'jose.garcia@shopcart.test',        @HashCliente,  N'José Antonio', N'García',           '5432-1098', 8),
-    ('CLIENTE',  N'andrea.castillo@shopcart.test',    @HashCliente,  N'Andrea',       N'Castillo',         '4789-0012', 10),
-    ('CLIENTE',  N'sofia.rodriguez@shopcart.test',    @HashCliente,  N'Sofía',        N'Rodríguez',        '5221-7788', 12),
-    ('CLIENTE',  N'diego.mendez@shopcart.test',       @HashCliente,  N'Diego Alejandro', N'Méndez',        '3345-9087', 15),
-    ('CLIENTE',  N'gabriela.ramirez@shopcart.test',   @HashCliente,  N'Gabriela',     N'Ramírez',          '5698-3321', 18),
-    ('CLIENTE',  N'carlos.ortiz@shopcart.test',       @HashCliente,  N'Carlos Enrique', N'Ortiz',          '4456-1209', 20),
-    ('CLIENTE',  N'valeria.cifuentes@shopcart.test',  @HashCliente,  N'Valeria',      N'Cifuentes',        '5011-6543', 23),
-    ('CLIENTE',  N'pablo.estrada@shopcart.test',      @HashCliente,  N'Pablo',        N'Estrada',          '3198-7765', 26),
-    ('CLIENTE',  N'daniela.barrios@shopcart.test',    @HashCliente,  N'Daniela',      N'Barrios',          '5567-4432', 30),
-    ('CLIENTE',  N'fernando.juarez@shopcart.test',    @HashCliente,  N'Fernando',     N'Juárez',           '4210-9988', 34),
-    ('CLIENTE',  N'mariana.galvez@shopcart.test',     @HashCliente,  N'Mariana',      N'Gálvez',           '5789-1122', 38),
-    ('CLIENTE',  N'lucia.aguilar@shopcart.test',      @HashCliente,  N'Lucía',        N'Aguilar',          '3301-2244', 41),
-    ('CLIENTE',  N'ricardo.velasquez@shopcart.test',  @HashCliente,  N'Ricardo',      N'Velásquez',        '5123-6677', 45),
-    ('CLIENTE',  N'paola.recinos@shopcart.test',      @HashCliente,  N'Paola',        N'Recinos',          '4987-3355', 50),
-    ('CLIENTE',  N'alejandro.sandoval@shopcart.test', @HashCliente,  N'Alejandro',    N'Sandoval',         '5345-8800', 55),
-    ('CLIENTE',  N'karla.orellana@shopcart.test',     @HashCliente,  N'Karla',        N'Orellana',         '3056-7711', 61),
-    ('CLIENTE',  N'mario.cabrera@shopcart.test',      @HashCliente,  N'Mario',        N'Cabrera',          '5632-0099', 70)
-) AS u (Rol, Correo, Hash, Nombres, Apellidos, Telefono, DiaAlta)
-INNER JOIN dbo.Rol r ON r.Codigo = u.Rol;
+    ( 1, 'ADMIN',    N'admin@shopcart.test',              @HashAdmin,    N'Andrea',       N'Morales Castillo', '5550-1001', 0),
+    ( 2, 'OPERADOR', N'operador@shopcart.test',           @HashOperador, N'Luis Fernando', N'Hernández',       '5550-1002', 0),
+    ( 3, 'OPERADOR', N'bodega@shopcart.test',             @HashOperador, N'Kevin',        N'Monterroso',       '5550-1003', 5),
+    ( 4, 'CLIENTE',  N'cliente@shopcart.test',            @HashCliente,  N'Juan Manuel',  N'García',           '5512-3344', 2),
+    ( 5, 'CLIENTE',  N'maria.lopez@shopcart.test',        @HashCliente,  N'María José',   N'López',            '4123-8890', 3),
+    ( 6, 'CLIENTE',  N'jc.perez@shopcart.test',           @HashCliente,  N'Juan Carlos',  N'Pérez',            '5876-2210', 4),
+    ( 7, 'CLIENTE',  N'ana.morales@shopcart.test',        @HashCliente,  N'Ana Lucía',    N'Morales',          '3011-4567', 6),
+    ( 8, 'CLIENTE',  N'jose.garcia@shopcart.test',        @HashCliente,  N'José Antonio', N'García',           '5432-1098', 8),
+    ( 9, 'CLIENTE',  N'andrea.castillo@shopcart.test',    @HashCliente,  N'Andrea',       N'Castillo',         '4789-0012', 10),
+    (10, 'CLIENTE',  N'sofia.rodriguez@shopcart.test',    @HashCliente,  N'Sofía',        N'Rodríguez',        '5221-7788', 12),
+    (11, 'CLIENTE',  N'diego.mendez@shopcart.test',       @HashCliente,  N'Diego Alejandro', N'Méndez',        '3345-9087', 15),
+    (12, 'CLIENTE',  N'gabriela.ramirez@shopcart.test',   @HashCliente,  N'Gabriela',     N'Ramírez',          '5698-3321', 18),
+    (13, 'CLIENTE',  N'carlos.ortiz@shopcart.test',       @HashCliente,  N'Carlos Enrique', N'Ortiz',          '4456-1209', 20),
+    (14, 'CLIENTE',  N'valeria.cifuentes@shopcart.test',  @HashCliente,  N'Valeria',      N'Cifuentes',        '5011-6543', 23),
+    (15, 'CLIENTE',  N'pablo.estrada@shopcart.test',      @HashCliente,  N'Pablo',        N'Estrada',          '3198-7765', 26),
+    (16, 'CLIENTE',  N'daniela.barrios@shopcart.test',    @HashCliente,  N'Daniela',      N'Barrios',          '5567-4432', 30),
+    (17, 'CLIENTE',  N'fernando.juarez@shopcart.test',    @HashCliente,  N'Fernando',     N'Juárez',           '4210-9988', 34),
+    (18, 'CLIENTE',  N'mariana.galvez@shopcart.test',     @HashCliente,  N'Mariana',      N'Gálvez',           '5789-1122', 38),
+    (19, 'CLIENTE',  N'lucia.aguilar@shopcart.test',      @HashCliente,  N'Lucía',        N'Aguilar',          '3301-2244', 41),
+    (20, 'CLIENTE',  N'ricardo.velasquez@shopcart.test',  @HashCliente,  N'Ricardo',      N'Velásquez',        '5123-6677', 45),
+    (21, 'CLIENTE',  N'paola.recinos@shopcart.test',      @HashCliente,  N'Paola',        N'Recinos',          '4987-3355', 50),
+    (22, 'CLIENTE',  N'alejandro.sandoval@shopcart.test', @HashCliente,  N'Alejandro',    N'Sandoval',         '5345-8800', 55),
+    (23, 'CLIENTE',  N'karla.orellana@shopcart.test',     @HashCliente,  N'Karla',        N'Orellana',         '3056-7711', 61),
+    (24, 'CLIENTE',  N'mario.cabrera@shopcart.test',      @HashCliente,  N'Mario',        N'Cabrera',          '5632-0099', 70)
+) AS u (Orden, Rol, Correo, Hash, Nombres, Apellidos, Telefono, DiaAlta)
+INNER JOIN dbo.Rol r ON r.Codigo = u.Rol
+ORDER BY u.Orden;  -- así el administrador queda con el ID 1
 GO
 
 -- Una dirección predeterminada por cliente (y una segunda para el cliente de prueba)

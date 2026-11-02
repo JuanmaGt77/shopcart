@@ -68,7 +68,7 @@ BEGIN
     IF @Valor NOT BETWEEN @Minimo AND @Maximo
     BEGIN
         SET @Mensaje = CONCAT(N'El valor de ', @Clave, N' debe estar entre ', @Minimo, N' y ', @Maximo, N'.');
-        THROW 60003, @Mensaje, 1;
+        THROW 60005, @Mensaje, 1;
     END;
 
     UPDATE dbo.ParametroSistema
