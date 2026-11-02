@@ -36,6 +36,12 @@ export class CacheTTL<V> {
     this.datos.clear();
   }
 
+  eliminarPorPrefijo(prefijo: string): void {
+    for (const clave of this.datos.keys()) {
+      if (clave.startsWith(prefijo)) this.datos.delete(clave);
+    }
+  }
+
   get tamano(): number {
     return this.datos.size;
   }
