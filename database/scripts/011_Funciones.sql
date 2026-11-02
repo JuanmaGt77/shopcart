@@ -214,6 +214,44 @@ RETURN
     WHERE c.IDCarrito = @IDCarrito;
 GO
 
+-- Número de error (THROW) que corresponde a cada resultado de FU_Cupones_EvaluarCarrito
+CREATE OR ALTER FUNCTION dbo.FU_Cupones_NumeroError (@Resultado VARCHAR(30))
+RETURNS TABLE
+AS
+RETURN
+    SELECT NumeroError = CASE @Resultado
+        WHEN 'CUPON_INACTIVO'       THEN 55002
+        WHEN 'CUPON_NO_VIGENTE'     THEN 55003
+        WHEN 'CUPON_VENCIDO'        THEN 55004
+        WHEN 'CUPON_AGOTADO'        THEN 55005
+        WHEN 'CUPON_LIMITE_CLIENTE' THEN 55006
+        WHEN 'CUPON_MONTO_MINIMO'   THEN 55007
+        WHEN 'CUPON_SIN_PRODUCTOS'  THEN 55008
+        ELSE 55002
+    END;
+GO
+
+-- Texto completo de una dirección para mostrarla y para guardar la copia en el pedido
+CREATE OR ALTER FUNCTION dbo.FU_Direcciones_TextoEntrega (@IDDireccion INT)
+RETURNS TABLE
+AS
+RETURN
+    SELECT
+        d.IDDireccion,
+        d.Alias,
+        d.NombreDestinatario,
+        d.Telefono,
+        Texto = CAST(CONCAT(d.Linea1,
+                            N', ' + d.Linea2,
+                            CASE WHEN d.Zona IS NOT NULL THEN CONCAT(N', zona ', d.Zona) END,
+                            N', ', d.Municipio,
+                            N', ', dep.Nombre,
+                            N'. Referencia: ' + d.Referencia) AS NVARCHAR(1000))
+    FROM dbo.Direccion d
+    INNER JOIN dbo.Departamento dep ON dep.IDDepartamento = d.IDDepartamento
+    WHERE d.IDDireccion = @IDDireccion;
+GO
+
 -- Desglose del IVA (12 %) de un monto que ya lo incluye
 CREATE OR ALTER FUNCTION dbo.FU_Pedidos_DesgloseIVA (@Total DECIMAL(12,2))
 RETURNS TABLE
