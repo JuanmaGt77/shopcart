@@ -1,0 +1,18 @@
+stateDiagram-v2
+    direction LR
+    [*] --> PAGADO: el pago se aprueba (se crea el pedido)
+    PAGADO --> EN_PREPARACION: operador
+    PAGADO --> CANCELADO: cliente u operador
+    EN_PREPARACION --> DESPACHADO: operador
+    EN_PREPARACION --> CANCELADO: cliente u operador
+    DESPACHADO --> ENTREGADO: operador
+    ENTREGADO --> DEVUELTO_PARCIAL: devolución de algunas unidades
+    ENTREGADO --> DEVUELTO: devolución de todo
+    DEVUELTO_PARCIAL --> DEVUELTO: se devuelve lo que faltaba
+    CANCELADO --> [*]
+    DEVUELTO --> [*]
+
+    note right of CANCELADO
+        Reintegra existencia (kardex),
+        libera el cupón y reembolsa
+    end note

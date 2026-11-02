@@ -1,0 +1,238 @@
+erDiagram
+    Rol ||--o{ Usuario : "asigna"
+    Usuario ||--o{ TokenRefresco : "tiene sesiones"
+    Usuario ||--o{ Direccion : "registra"
+    Departamento ||--o{ Direccion : "ubica"
+
+    Categoria ||--o{ Producto : "agrupa"
+    Producto ||--o{ ProductoImagen : "muestra"
+    Producto ||--|{ Variante : "se vende como"
+    Atributo ||--o{ AtributoValor : "admite"
+    Variante ||--o{ VarianteAtributo : "se describe con"
+    AtributoValor ||--o{ VarianteAtributo : "valor de"
+
+    Categoria |o--o{ Cupon : "restringe"
+    Usuario |o--o{ Carrito : "arma"
+    Cupon |o--o{ Carrito : "aplicado en"
+    Carrito ||--o{ CarritoDetalle : "contiene"
+    Variante ||--o{ CarritoDetalle : "en"
+
+    Carrito ||--o{ Checkout : "inicia"
+    Usuario ||--o{ Checkout : "paga"
+    Direccion ||--o{ Checkout : "entrega en"
+    MetodoEnvio ||--o{ Checkout : "envía por"
+    Checkout ||--|{ CheckoutDetalle : "reserva"
+    Variante ||--o{ CheckoutDetalle : "reservada en"
+
+    Checkout ||--o| Pedido : "genera"
+    Usuario ||--o{ Pedido : "compra"
+    EstadoPedido ||--o{ Pedido : "estado actual"
+    EstadoPedido ||--o{ EstadoPedidoTransicion : "permite"
+    Pedido ||--|{ PedidoDetalle : "incluye"
+    Variante ||--o{ PedidoDetalle : "vendida en"
+    Pedido ||--|{ PedidoHistorialEstado : "registra"
+    Pedido ||--|| Pago : "se cobra con"
+    Pedido ||--o| CuponUso : "usa"
+    Cupon ||--o{ CuponUso : "usado en"
+    Pedido ||--o{ Devolucion : "puede tener"
+    Devolucion ||--|{ DevolucionDetalle : "incluye"
+    PedidoDetalle ||--o{ DevolucionDetalle : "devuelta en"
+
+    Variante ||--o{ Kardex : "movimientos"
+    TipoMovimiento ||--o{ Kardex : "clasifica"
+    Pedido |o--o{ Kardex : "origina"
+    Devolucion |o--o{ Kardex : "origina"
+    Usuario |o--o{ Bitacora : "hizo el cambio"
+
+    Rol {
+        int IDRol PK
+        varchar Codigo UK "CLIENTE, OPERADOR, ADMIN"
+    }
+    Usuario {
+        int IDUsuario PK
+        int IDRol FK
+        nvarchar Correo UK
+        varchar HashContrasena "argon2id"
+        bit Activo "nunca se borra"
+    }
+    TokenRefresco {
+        bigint IDTokenRefresco PK
+        int IDUsuario FK
+        char HashToken UK "SHA-256"
+        uniqueidentifier Familia
+        datetime2 FechaRevocacion
+    }
+    Departamento {
+        int IDDepartamento PK
+        nvarchar Nombre UK
+    }
+    Direccion {
+        int IDDireccion PK
+        int IDUsuario FK
+        int IDDepartamento FK
+        nvarchar Linea1
+        bit EsPredeterminada "una por cliente"
+    }
+    Categoria {
+        int IDCategoria PK
+        nvarchar Nombre UK
+        bit Activo
+    }
+    Producto {
+        int IDProducto PK
+        int IDCategoria FK
+        nvarchar Nombre
+        bit Activo
+    }
+    ProductoImagen {
+        int IDProductoImagen PK
+        int IDProducto FK
+        nvarchar Url
+    }
+    Atributo {
+        int IDAtributo PK
+        nvarchar Nombre UK "Talla, Color"
+    }
+    AtributoValor {
+        int IDAtributoValor PK
+        int IDAtributo FK
+        nvarchar Valor
+    }
+    Variante {
+        int IDVariante PK
+        int IDProducto FK
+        varchar SKU UK
+        decimal Precio "mayor a 0"
+        int Existencia "fisica"
+        int Reservada "menor o igual a Existencia"
+        int Disponible "calculada"
+    }
+    VarianteAtributo {
+        int IDVarianteAtributo PK
+        int IDVariante FK
+        int IDAtributoValor FK
+    }
+    Cupon {
+        int IDCupon PK
+        int IDCategoria FK "opcional"
+        varchar Codigo UK
+        varchar TipoDescuento "PORCENTAJE o MONTO"
+        decimal Valor
+        int LimiteUsosTotal
+        int UsosActuales "menor o igual al limite"
+    }
+    Carrito {
+        int IDCarrito PK
+        int IDUsuario FK "NULL si es invitado"
+        uniqueidentifier TokenInvitado UK
+        varchar Estado
+    }
+    CarritoDetalle {
+        int IDCarritoDetalle PK
+        int IDCarrito FK
+        int IDVariante FK
+        int Cantidad
+    }
+    MetodoEnvio {
+        int IDMetodoEnvio PK
+        varchar Codigo UK
+        decimal Costo
+    }
+    Checkout {
+        int IDCheckout PK
+        int IDCarrito FK
+        decimal Total "congelado"
+        varchar Estado "ACTIVO, COMPLETADO, EXPIRADO, CANCELADO"
+        datetime2 FechaExpiracion "15 min"
+    }
+    CheckoutDetalle {
+        int IDCheckoutDetalle PK
+        int IDCheckout FK
+        int IDVariante FK
+        int Cantidad "unidades reservadas"
+        decimal PrecioUnitario "congelado"
+    }
+    EstadoPedido {
+        int IDEstadoPedido PK
+        varchar Codigo UK
+        bit CuentaComoVenta
+    }
+    EstadoPedidoTransicion {
+        int IDEstadoPedidoTransicion PK
+        int IDEstadoOrigen FK
+        int IDEstadoDestino FK
+    }
+    Pedido {
+        int IDPedido PK
+        varchar NumeroPedido UK
+        int IDUsuario FK
+        int IDCheckout FK,UK "un pedido por checkout"
+        int IDEstadoPedido FK
+        decimal Total "Subtotal - Descuento + Envio"
+        decimal MontoDevuelto
+        varchar ClaveIdempotencia UK
+    }
+    PedidoDetalle {
+        int IDPedidoDetalle PK
+        int IDPedido FK
+        int IDVariante FK
+        decimal PrecioUnitario "copia del momento"
+        int Cantidad
+        int CantidadDevuelta "menor o igual a Cantidad"
+    }
+    PedidoHistorialEstado {
+        bigint IDPedidoHistorialEstado PK
+        int IDPedido FK
+        int IDEstadoAnterior FK
+        int IDEstadoNuevo FK
+        int IDUsuario FK
+    }
+    Pago {
+        int IDPago PK
+        int IDPedido FK,UK "un cobro por pedido"
+        decimal Monto
+        char UltimosDigitos
+    }
+    CuponUso {
+        int IDCuponUso PK
+        int IDCupon FK
+        int IDPedido FK,UK "un cupon por pedido"
+    }
+    Devolucion {
+        int IDDevolucion PK
+        int IDPedido FK
+        decimal MontoReembolso
+    }
+    DevolucionDetalle {
+        int IDDevolucionDetalle PK
+        int IDDevolucion FK
+        int IDPedidoDetalle FK
+        int Cantidad
+    }
+    TipoMovimiento {
+        int IDTipoMovimiento PK
+        varchar Codigo UK
+        char Naturaleza "E o S"
+    }
+    Kardex {
+        bigint IDKardex PK
+        int IDVariante FK
+        int IDTipoMovimiento FK
+        int Cantidad "con signo"
+        int ExistenciaAnterior
+        int ExistenciaNueva "Anterior + Cantidad"
+        nvarchar Motivo
+    }
+    Bitacora {
+        bigint IDBitacora PK
+        varchar Modulo
+        varchar Accion
+        nvarchar ValorAnterior "JSON"
+        nvarchar ValorNuevo "JSON"
+        int IDUsuario FK
+    }
+    ParametroSistema {
+        int IDParametroSistema PK
+        varchar Clave UK
+        int Valor
+    }
