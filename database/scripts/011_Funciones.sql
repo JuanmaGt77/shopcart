@@ -16,6 +16,18 @@ GO
 USE [$(DBName)];
 GO
 
+-- Arma el patrón para un LIKE de búsqueda escapando los comodines (% _ [) que
+-- escriba el usuario, para que se busquen como texto literal.
+CREATE OR ALTER FUNCTION dbo.FU_Sistema_PatronBusqueda (@Texto NVARCHAR(100))
+RETURNS TABLE
+AS
+RETURN
+    SELECT Patron = CAST(CASE
+        WHEN NULLIF(LTRIM(RTRIM(@Texto)), N'') IS NULL THEN NULL
+        ELSE N'%' + REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(@Texto)), N'[', N'[[]'), N'%', N'[%]'), N'_', N'[_]') + N'%'
+    END AS NVARCHAR(320));
+GO
+
 -- "Color: Negro / Talla: M" a partir de los atributos de la variante
 CREATE OR ALTER FUNCTION dbo.FU_Catalogo_DescripcionVariante (@IDVariante INT)
 RETURNS TABLE
@@ -24,6 +36,19 @@ RETURN
     SELECT Descripcion = CAST(LEFT(
                STRING_AGG(CAST(CONCAT(a.Nombre, N': ', av.Valor) AS NVARCHAR(120)), N' / ')
                    WITHIN GROUP (ORDER BY a.Nombre), 200) AS NVARCHAR(200))
+    FROM dbo.VarianteAtributo va
+    INNER JOIN dbo.Atributo a       ON a.IDAtributo = va.IDAtributo
+    INNER JOIN dbo.AtributoValor av ON av.IDAtributoValor = va.IDAtributoValor
+    WHERE va.IDVariante = @IDVariante;
+GO
+
+-- "Color=Negro|Talla=M": sirve para impedir dos variantes iguales en un producto
+CREATE OR ALTER FUNCTION dbo.FU_Catalogo_FirmaVariante (@IDVariante INT)
+RETURNS TABLE
+AS
+RETURN
+    SELECT Firma = STRING_AGG(CAST(CONCAT(a.Nombre, N'=', av.Valor) AS NVARCHAR(120)), N'|')
+                       WITHIN GROUP (ORDER BY a.Nombre)
     FROM dbo.VarianteAtributo va
     INNER JOIN dbo.Atributo a       ON a.IDAtributo = va.IDAtributo
     INNER JOIN dbo.AtributoValor av ON av.IDAtributoValor = va.IDAtributoValor

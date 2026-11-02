@@ -68,7 +68,7 @@ CREATE TABLE dbo.Pedido (
     -- Copia de la entrega al momento de la compra
     EntregaDestinatario     NVARCHAR(150)  NOT NULL,
     EntregaTelefono         VARCHAR(20)    NOT NULL,
-    EntregaDireccion        NVARCHAR(700)  NOT NULL,
+    EntregaDireccion        NVARCHAR(1000) NOT NULL,
     MetodoEnvioNombre       NVARCHAR(80)   NOT NULL,
     CodigoCupon             VARCHAR(30)    NULL,
     -- Montos congelados (quetzales, IVA incluido)
