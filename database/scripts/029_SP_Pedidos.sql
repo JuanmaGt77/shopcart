@@ -60,6 +60,7 @@ BEGIN
     SELECT d.IDPedidoDetalle, d.IDVariante, d.SKU, d.NombreProducto, d.DescripcionVariante, d.Cantidad,
            d.PrecioUnitario, d.Subtotal, d.Descuento, d.Total, d.CantidadDevuelta, d.MontoDevuelto,
            CantidadDevolvible = d.Cantidad - d.CantidadDevuelta,
+           DisponibleActual = (SELECT v.Disponible FROM dbo.Variante v WHERE v.IDVariante = d.IDVariante),
            ImagenUrl = (SELECT TOP (1) i.Url FROM dbo.ProductoImagen i
                         INNER JOIN dbo.Variante v ON v.IDProducto = i.IDProducto
                         WHERE v.IDVariante = d.IDVariante ORDER BY i.Orden)

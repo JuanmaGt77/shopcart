@@ -87,7 +87,7 @@ BEGIN
     WHERE c.IDCheckout = @IDCheckout;
 
     SELECT d.IDVariante, vd.SKU, vd.NombreProducto, vd.DescripcionVariante, d.Cantidad, d.PrecioUnitario,
-           d.Subtotal, d.Descuento, Total = d.Subtotal - d.Descuento,
+           d.Subtotal, d.Descuento, Total = d.Subtotal - d.Descuento, vd.Disponible,
            ImagenUrl = (SELECT TOP (1) i.Url FROM dbo.ProductoImagen i WHERE i.IDProducto = vd.IDProducto ORDER BY i.Orden)
     FROM dbo.CheckoutDetalle d
     INNER JOIN dbo.VW_Catalogo_VarianteDetalle vd ON vd.IDVariante = d.IDVariante
