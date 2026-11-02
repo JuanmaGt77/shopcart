@@ -10,10 +10,12 @@ export interface OpcionesAuth {
 }
 
 export function rutasAuth(opciones: OpcionesAuth): Modulo {
+  // Solo cuentan los intentos fallidos: quien escribe bien su contraseña nunca se bloquea
   const limiteLogin = crearLimitador({
     maximo: opciones.limiteLogin,
     ventanaMinutos: 15,
-    mensaje: 'Demasiados intentos de inicio de sesión. Espera unos minutos e intenta de nuevo.',
+    mensaje: 'Demasiados intentos fallidos de inicio de sesión. Espera unos minutos e intenta de nuevo.',
+    soloFallidos: true,
   });
   const limiteRegistro = crearLimitador({
     maximo: opciones.limiteRegistro,
@@ -43,7 +45,7 @@ export function rutasAuth(opciones: OpcionesAuth): Modulo {
       ruta: '/login',
       resumen: 'Iniciar sesión',
       descripcion:
-        'Devuelve un access token JWT (15 minutos) y deja el refresh token en la cookie shopcart_rt. Limitado a 10 intentos por IP cada 15 minutos.',
+        'Devuelve un access token JWT (15 minutos) y deja el refresh token en la cookie shopcart_rt. Se bloquea por 15 minutos la IP que acumule 10 intentos fallidos.',
       acceso: 'publico',
       body: loginEsquema,
       antes: [limiteLogin],
