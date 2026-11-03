@@ -169,7 +169,9 @@ npm run demo:cupon                # cupón de 3 usos, 10 pagos simultáneos: exa
 npm run realtime:escuchar         # en otra terminal: ves los eventos aparecer en vivo
 ```
 
-Y para mostrar que **la base protege las reglas aunque alguien se salte la API**, en `database/pruebas/` hay scripts para SSMS (modo SQLCMD) o sqlcmd:
+Para probar la API a mano desde VS Code está **`backend/pruebas-api.http`** (extensión *REST Client*): una compra completa, doble clic en pagar, accesos por rol, aislamiento entre clientes, ciclo de vida del pedido, reportes y bitácora. Se ejecuta petición por petición con *Send Request*.
+
+Y para mostrar que **la base protege las reglas aunque alguien se salte la API**, en `database/pruebas/` hay scripts que se abren y ejecutan tal cual en SSMS, Azure Data Studio o VS Code (extensión SQL Server):
 
 | Script | Muestra |
 |---|---|

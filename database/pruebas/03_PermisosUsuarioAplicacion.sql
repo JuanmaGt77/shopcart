@@ -5,10 +5,12 @@
    aplicación con EXECUTE AS y se prueba qué puede y qué no puede hacer.
    ============================================================================= */
 SET NOCOUNT ON;
-USE [$(DBName)];
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+USE ShopCart;   -- si le pusiste otro nombre a la base, cámbialo aquí
 GO
 
-EXECUTE AS USER = N'$(AppUser)';
+EXECUTE AS USER = N'shopcart_app';
 PRINT CONCAT('Ahora soy: ', USER_NAME());
 
 PRINT '--- 1. Ejecutar un SP público: permitido';

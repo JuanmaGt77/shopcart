@@ -8,7 +8,9 @@
    PREPARACIÓN (cualquier ventana): deja la variante con 1 sola unidad disponible
    y pone la misma variante en el carrito de dos clientes.
    ============================================================================= */
-USE [$(DBName)];
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+USE ShopCart;   -- si le pusiste otro nombre a la base, cámbialo aquí
 GO
 /* ---- PREPARACIÓN ---------------------------------------------------------- */
 DECLARE @IDAdmin INT = (SELECT IDUsuario FROM dbo.Usuario WHERE Correo = N'admin@shopcart.test');

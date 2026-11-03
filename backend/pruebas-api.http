@@ -1,0 +1,272 @@
+###############################################################################
+# Pruebas manuales de la API desde VS Code
+#
+# Requiere la extensión "REST Client" (humao.rest-client).
+# Con la API corriendo (docker compose up -d), presiona "Send Request" encima de
+# cada petición, EN ORDEN: las siguientes usan datos de las anteriores (token,
+# variante, checkout, pedido).
+###############################################################################
+
+@api = http://localhost:3000/api
+
+### 0. Salud de la API y de la base
+GET {{api}}/salud
+
+###############################################################################
+# 1. COMPRA COMPLETA COMO CLIENTE
+###############################################################################
+
+### 1.1 Login del cliente
+# @name loginCliente
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "correo": "cliente@shopcart.test", "contrasena": "Cliente123!" }
+
+###
+@tokenCliente = {{loginCliente.response.body.$.datos.accessToken}}
+
+### 1.2 Buscar productos (texto, filtros, orden y paginación)
+GET {{api}}/productos?q=playera&disponible=true&ordenarPor=precio&direccion=asc&pagina=1&tamanoPagina=5
+
+### 1.3 Detalle de un producto con sus variantes
+# @name producto
+GET {{api}}/productos/1
+
+###
+@idVariante = {{producto.response.body.$.datos.variantes[0].idVariante}}
+
+### 1.4 Vaciar el carrito (por si quedó algo de una prueba anterior)
+DELETE {{api}}/carrito
+Authorization: Bearer {{tokenCliente}}
+
+### 1.5 Agregar al carrito
+POST {{api}}/carrito/items
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{ "idVariante": {{idVariante}}, "cantidad": 2 }
+
+### 1.6 Intentar agregar más de lo disponible → 409 CANTIDAD_EXCEDE_DISPONIBLE
+POST {{api}}/carrito/items
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{ "idVariante": {{idVariante}}, "cantidad": 999 }
+
+### 1.7 Cupón vencido → 422 CUPON_VENCIDO con mensaje específico
+POST {{api}}/carrito/cupon
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{ "codigo": "VERANO2025" }
+
+### 1.8 Cupón con monto mínimo (Q100) → 422 CUPON_MONTO_MINIMO si no alcanza, o se aplica
+POST {{api}}/carrito/cupon
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{ "codigo": "BIENVENIDA10" }
+
+### 1.9 Ver el carrito (subtotal, descuento y total)
+GET {{api}}/carrito
+Authorization: Bearer {{tokenCliente}}
+
+### 1.10 Mis direcciones
+# @name direcciones
+GET {{api}}/direcciones
+Authorization: Bearer {{tokenCliente}}
+
+###
+@idDireccion = {{direcciones.response.body.$.datos[0].idDireccion}}
+
+### 1.11 Iniciar el pago: congela precios y reserva la existencia 15 minutos
+# @name checkout
+POST {{api}}/checkout
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{ "idDireccion": {{idDireccion}}, "idMetodoEnvio": 1 }
+
+###
+@idCheckout = {{checkout.response.body.$.datos.idCheckout}}
+
+### 1.12 Pagar con tarjeta aprobada → 201 (pedido creado)
+# @name pago
+POST {{api}}/checkout/{{idCheckout}}/pagar
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+Idempotency-Key: pago-{{idCheckout}}-prueba
+
+{ "tarjeta": { "numero": "4111111111111111", "titular": "Juan Manuel Garcia", "expiracion": "12/30", "cvv": "123" } }
+
+###
+@idPedido = {{pago.response.body.$.datos.pedido.idPedido}}
+
+### 1.13 Repetir EXACTAMENTE el mismo pago (doble clic) → 200, mismo pedido, duplicado: true
+POST {{api}}/checkout/{{idCheckout}}/pagar
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+Idempotency-Key: pago-{{idCheckout}}-prueba
+
+{ "tarjeta": { "numero": "4111111111111111", "titular": "Juan Manuel Garcia", "expiracion": "12/30", "cvv": "123" } }
+
+### 1.14 Pago sin Idempotency-Key → 400
+POST {{api}}/checkout/{{idCheckout}}/pagar
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{ "tarjeta": { "numero": "4111111111111111", "titular": "Juan Manuel Garcia", "expiracion": "12/30", "cvv": "123" } }
+
+### 1.15 Ver el pedido con su historial de estados
+GET {{api}}/pedidos/{{idPedido}}
+Authorization: Bearer {{tokenCliente}}
+
+### 1.16 Mis pedidos (paginado)
+GET {{api}}/pedidos/mios?pagina=1&tamanoPagina=5
+Authorization: Bearer {{tokenCliente}}
+
+###############################################################################
+# 2. SEGURIDAD
+###############################################################################
+
+### 2.1 Sin token → 401
+GET {{api}}/pedidos/mios
+
+### 2.2 Token alterado → 401 TOKEN_INVALIDO
+GET {{api}}/pedidos/mios
+Authorization: Bearer {{tokenCliente}}x
+
+### 2.3 Cliente intentando ver reportes → 403
+GET {{api}}/reportes/resumen
+Authorization: Bearer {{tokenCliente}}
+
+### 2.4 Intento de SQL injection en la búsqueda → se busca literal, 0 resultados
+GET {{api}}/productos?q=' OR 1=1 --
+
+### 2.5 Campo de más en el body (idUsuario) → 400, los esquemas son estrictos
+POST {{api}}/carrito/items
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{ "idVariante": {{idVariante}}, "cantidad": 1, "idUsuario": 1 }
+
+### 2.6 Login de OTRO cliente
+# @name loginMaria
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "correo": "maria.lopez@shopcart.test", "contrasena": "Cliente123!" }
+
+###
+@tokenMaria = {{loginMaria.response.body.$.datos.accessToken}}
+
+### 2.7 María intenta ver el pedido de Juan → 403
+GET {{api}}/pedidos/{{idPedido}}
+Authorization: Bearer {{tokenMaria}}
+
+### 2.8 María intenta cancelar el pedido de Juan → 403
+POST {{api}}/pedidos/{{idPedido}}/cancelar
+Authorization: Bearer {{tokenMaria}}
+Content-Type: application/json
+
+{ "motivo": "No es mío" }
+
+###############################################################################
+# 3. OPERADOR: CICLO DE VIDA DEL PEDIDO
+###############################################################################
+
+### 3.1 Login del operador
+# @name loginOperador
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "correo": "operador@shopcart.test", "contrasena": "Operador123!" }
+
+###
+@tokenOperador = {{loginOperador.response.body.$.datos.accessToken}}
+
+### 3.2 Saltarse estados (PAGADO → ENTREGADO) → 409 TRANSICION_NO_PERMITIDA
+PATCH {{api}}/pedidos/{{idPedido}}/estado
+Authorization: Bearer {{tokenOperador}}
+Content-Type: application/json
+
+{ "estado": "ENTREGADO" }
+
+### 3.3 Avanzar a EN_PREPARACION → 200 (queda en el historial)
+PATCH {{api}}/pedidos/{{idPedido}}/estado
+Authorization: Bearer {{tokenOperador}}
+Content-Type: application/json
+
+{ "estado": "EN_PREPARACION", "comentario": "Bodega armando el pedido" }
+
+### 3.4 El cliente cancela (todavía no se despacha) → reintegra existencia por kardex
+POST {{api}}/pedidos/{{idPedido}}/cancelar
+Authorization: Bearer {{tokenCliente}}
+Content-Type: application/json
+
+{ "motivo": "Ya no lo necesito" }
+
+### 3.5 Kardex de la variante: aparecen la SALIDA_VENTA y la CANCELACION
+GET {{api}}/inventario/kardex?idVariante={{idVariante}}&pagina=1&tamanoPagina=5
+Authorization: Bearer {{tokenOperador}}
+
+### 3.6 Ajuste de inventario sin motivo → 400
+POST {{api}}/inventario/movimientos
+Authorization: Bearer {{tokenOperador}}
+Content-Type: application/json
+
+{ "idVariante": {{idVariante}}, "tipo": "AJUSTE_SALIDA", "cantidad": 1 }
+
+###############################################################################
+# 4. ADMINISTRADOR: REPORTES, PRECIOS Y BITÁCORA
+###############################################################################
+
+### 4.1 Login del administrador
+# @name loginAdmin
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "correo": "admin@shopcart.test", "contrasena": "Admin123!" }
+
+###
+@tokenAdmin = {{loginAdmin.response.body.$.datos.accessToken}}
+
+### 4.2 Resumen del dashboard (ventas netas, pedidos, ticket promedio)
+GET {{api}}/reportes/resumen
+Authorization: Bearer {{tokenAdmin}}
+
+### 4.3 Ventas por semana (repítela: el encabezado X-Cache pasa de MISS a HIT)
+GET {{api}}/reportes/ventas?agrupacion=semana
+Authorization: Bearer {{tokenAdmin}}
+
+### 4.4 Ventas por categoría
+GET {{api}}/reportes/ventas-por-categoria
+Authorization: Bearer {{tokenAdmin}}
+
+### 4.5 Top 10 productos
+GET {{api}}/reportes/top-productos
+Authorization: Bearer {{tokenAdmin}}
+
+### 4.6 Carritos abandonados
+GET {{api}}/reportes/carritos-abandonados
+Authorization: Bearer {{tokenAdmin}}
+
+### 4.7 Pedidos con filtros del lado del servidor
+GET {{api}}/pedidos?estado=ENTREGADO&pagina=1&tamanoPagina=10
+Authorization: Bearer {{tokenAdmin}}
+
+### 4.8 Cambiar el precio de una variante (queda en bitácora)
+PATCH {{api}}/variantes/{{idVariante}}/precio
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{ "precio": 85.50 }
+
+### 4.9 Bitácora del catálogo: precio anterior y nuevo, usuario y fecha
+GET {{api}}/bitacora?modulo=CATALOGO&pagina=1&tamanoPagina=5
+Authorization: Bearer {{tokenAdmin}}
+
+### 4.10 Conciliación: existencia vs. suma del kardex
+GET {{api}}/inventario/conciliacion
+Authorization: Bearer {{tokenAdmin}}

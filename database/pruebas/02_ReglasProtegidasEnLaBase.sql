@@ -7,7 +7,9 @@
    ============================================================================= */
 SET NOCOUNT ON;
 SET XACT_ABORT OFF;
-USE [$(DBName)];
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+USE ShopCart;   -- si le pusiste otro nombre a la base, cámbialo aquí
 GO
 
 DECLARE @IDPedido INT = (SELECT TOP (1) p.IDPedido FROM dbo.Pedido p
