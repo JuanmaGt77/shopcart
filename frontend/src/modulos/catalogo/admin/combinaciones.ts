@@ -23,7 +23,8 @@ export function codigoParaSku(valor: string): string {
     .replace(/½/g, '05')
     .replace(/×/g, 'X')
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    // Quita las tildes (marcas diacríticas que separa NFD): "galón" -> "galon"
+    .replace(/\p{Diacritic}/gu, '')
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, '');
 }
