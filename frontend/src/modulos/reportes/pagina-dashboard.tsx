@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, Ban, ShoppingCart, Undo2, UserPlus } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Ban, Download, ShoppingCart, Undo2, UserPlus } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { z } from 'zod';
@@ -26,6 +26,7 @@ import {
   type Agrupacion,
   type Rango,
 } from './api';
+import { exportarCategorias, exportarTopProductos, exportarVentas } from './exportar';
 import { GraficaCategorias, GraficaVentas } from './graficas';
 import { completarDias, etiquetaPeriodo } from './series';
 
@@ -196,18 +197,24 @@ export function PaginaDashboard() {
               <CardTitle>Ventas netas en el tiempo</CardTitle>
               <CardDescription>Por {agrupacion === 'dia' ? 'día' : agrupacion}, en quetzales</CardDescription>
             </div>
-            <ToggleGroup
-              type="single"
-              variant="outline"
-              size="sm"
-              value={agrupacion}
-              onValueChange={(v) => v && cambiar({ agrupacion: v === 'dia' ? undefined : v })}
-              aria-label="Agrupar por"
-            >
-              <ToggleGroupItem value="dia">Día</ToggleGroupItem>
-              <ToggleGroupItem value="semana">Semana</ToggleGroupItem>
-              <ToggleGroupItem value="mes">Mes</ToggleGroupItem>
-            </ToggleGroup>
+            <div className="flex flex-wrap items-center gap-2">
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                size="sm"
+                value={agrupacion}
+                onValueChange={(v) => v && cambiar({ agrupacion: v === 'dia' ? undefined : v })}
+                aria-label="Agrupar por"
+              >
+                <ToggleGroupItem value="dia">Día</ToggleGroupItem>
+                <ToggleGroupItem value="semana">Semana</ToggleGroupItem>
+                <ToggleGroupItem value="mes">Mes</ToggleGroupItem>
+              </ToggleGroup>
+              <BotonExportar
+                deshabilitado={!serie?.length}
+                alExportar={() => serie && exportarVentas(serie, agrupacion, rango)}
+              />
+            </div>
           </CardHeader>
           <CardContent className={cn(ventas.isFetching && 'opacity-60')}>
             {ventas.isError ? (
@@ -278,9 +285,15 @@ export function PaginaDashboard() {
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Ventas por categoría</CardTitle>
-            <CardDescription>Monto vendido neto de devoluciones</CardDescription>
+          <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
+            <div>
+              <CardTitle>Ventas por categoría</CardTitle>
+              <CardDescription>Monto vendido neto de devoluciones</CardDescription>
+            </div>
+            <BotonExportar
+              deshabilitado={!categorias.data?.length}
+              alExportar={() => categorias.data && exportarCategorias(categorias.data, rango)}
+            />
           </CardHeader>
           <CardContent className={cn(categorias.isFetching && 'opacity-60')}>
             {categorias.isError ? (
@@ -298,9 +311,15 @@ export function PaginaDashboard() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Top 10 productos</CardTitle>
-            <CardDescription>Por unidades vendidas (netas de devoluciones)</CardDescription>
+          <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
+            <div>
+              <CardTitle>Top 10 productos</CardTitle>
+              <CardDescription>Por unidades vendidas (netas de devoluciones)</CardDescription>
+            </div>
+            <BotonExportar
+              deshabilitado={!top.data?.length}
+              alExportar={() => top.data && exportarTopProductos(top.data, rango)}
+            />
           </CardHeader>
           <CardContent className={cn(top.isFetching && 'opacity-60')}>
             {top.isError ? (
@@ -492,5 +511,13 @@ function CarritosAbandonados({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function BotonExportar({ alExportar, deshabilitado }: { alExportar: () => void; deshabilitado: boolean }) {
+  return (
+    <Button variant="outline" size="sm" onClick={alExportar} disabled={deshabilitado}>
+      <Download /> Exportar CSV
+    </Button>
   );
 }

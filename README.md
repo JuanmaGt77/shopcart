@@ -15,7 +15,7 @@ Este repositorio es el **proyecto completo**:
 | Backend | Node.js 24 LTS, Express 5, TypeScript en modo `strict` |
 | Acceso a datos | **Exclusivamente stored procedures** (88 SPs). Cero SQL en el código del backend, sin ORM |
 | Frontend | React 19, TypeScript `strict`, Vite, Tailwind CSS + shadcn/ui, TanStack Query, Socket.IO |
-| Pruebas | 72 pruebas de integración del backend contra SQL Server real y 36 pruebas del frontend |
+| Pruebas | 72 pruebas de integración del backend contra SQL Server real y 39 pruebas del frontend |
 | Tienda y panel | `http://localhost:8080` (Docker) o `http://localhost:5173` (desarrollo) |
 | Documentación de la API | Swagger en `http://localhost:3000/api/docs` |
 
@@ -221,7 +221,7 @@ Y para mostrar que **la base protege las reglas aunque alguien se salte la API**
 
 ### Pruebas del frontend (`cd frontend && npm test`)
 
-36 pruebas con Vitest sobre la lógica que decide lo importante:
+39 pruebas con Vitest sobre la lógica que decide lo importante:
 
 | Archivo | Qué comprueba |
 |---|---|
@@ -230,6 +230,7 @@ Y para mostrar que **la base protege las reglas aunque alguien se salte la API**
 | `catalogo/seleccion-variante.test.ts` | Selector de variantes: valores en orden de alta, combinaciones agotadas o inexistentes y ajuste automático |
 | `catalogo/admin/combinaciones.test.ts` | Generador de variantes del administrador: combinaciones y SKU válidos (sin tildes, ¼, ×) |
 | `auth/destino.test.ts` | Después del login solo se redirige a rutas internas (sin redirección abierta) y cada rol va a su área |
+| `lib/csv.test.ts` | Exportación a CSV: tildes legibles en Excel, comillas escapadas y **textos que Excel tomaría como fórmula neutralizados** (inyección de CSV) |
 | `reportes/series.test.ts`, `lib/*.test.ts`, `bitacora/comparar.test.ts` | Días sin ventas en cero, montos en quetzales, fechas en hora de Guatemala, paginación y comparación de la bitácora |
 
 ### Guion de demostración en el navegador
@@ -271,7 +272,7 @@ Con todo levantado (`http://localhost:8080`):
 | Visitante | Inicio, catálogo con búsqueda y filtros, detalle con selector de variantes, carrito de invitado, login y registro |
 | Cliente | Lo anterior, más: checkout (dirección, envío, reserva, pago), mis pedidos con seguimiento en vivo y cancelación, mis direcciones y mi perfil |
 | Operador | Pedidos (filtros, cambios de estado, cancelación, devoluciones), inventario con movimientos, kardex y conciliación |
-| Administrador | Todo lo del operador, más: dashboard en vivo, productos y precios, categorías, cupones, usuarios, bitácora y parámetros |
+| Administrador | Todo lo del operador, más: dashboard en vivo (con exportación a CSV), productos y precios, categorías, cupones, usuarios, bitácora y parámetros |
 
 El menú y las rutas siguen el mismo acceso por rol que la API. El operador no ve el dashboard ni la administración, y el personal no compra con su cuenta de trabajo. **Quien decide es la API**: el frontend solo evita mostrar pantallas que de todos modos responderían 403.
 
@@ -352,6 +353,8 @@ Dentro de cada módulo: `api.ts` (llamadas y tipos) → hooks de TanStack Query 
     - Colores validados de contraste y daltonismo en modo claro y oscuro.
     - Las ventas en el tiempo tienen vista de tabla; las barras de categorías muestran su monto.
 14. **Imágenes genéricas** (con el nombre del producto). Si una URL no carga, se muestra el ícono de la categoría.
+15. **Modo oscuro** (claro, oscuro o como el sistema). `public/tema.js` aplica el tema antes de pintar, sin parpadeo. Es un archivo propio y no un script en línea porque la CSP solo permite scripts del mismo origen.
+16. **Exportar a CSV** las ventas, las categorías y el top 10 del rango elegido. Se arma en el navegador con las mismas cifras que devolvió la API, con BOM para que Excel lea las tildes. Los textos que empiezan con `=`, `+`, `-` o `@` se neutralizan para que Excel no los ejecute como fórmula.
 
 ---
 
@@ -737,10 +740,9 @@ Todos los objetos se crean con scripts escritos a mano; no hay ORM.
 
 ## 14. Qué sigue / mejoras posibles
 
-- Exportar reportes a Excel/PDF.
+- Exportar reportes a PDF y en formato .xlsx nativo (hoy se exportan a CSV, que Excel abre directo).
 - Elegir la estación exacta para recoger (necesita una tabla de estaciones con horarios y existencia por estación).
 - Vender combustible, vales prepagados o servicios: no tienen envío, kardex ni devolución por línea como un producto, así que requieren su propio modelo.
-- Modo oscuro con selector (los colores ya están definidos para los dos modos, incluidas las gráficas).
 - Pruebas de punta a punta en el navegador con Playwright dentro del pipeline (el flujo de compra, el tiempo real y la revocación de sesión ya se probaron así durante el desarrollo).
 - Búsqueda con Full-Text Search de SQL Server cuando el catálogo crezca.
 - Redis para caché, rate limit y Socket.IO si se corren varias instancias.
