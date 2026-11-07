@@ -63,8 +63,23 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       # En local se usa http; con HTTPS en producción va en true
       COOKIE_SECURE: "false"
+      # El frontend llega a través del nginx del servicio web: se confía en ese proxy para
+      # leer la IP real del cliente (la usa el rate limit del login)
+      TRUST_PROXY: "1"
     ports:
       - "${API_PORT:-3000}:3000"
+    restart: unless-stopped
+
+  # Frontend (React compilado, servido por nginx). Reenvía /api y /socket.io a la API,
+  # así el navegador usa un solo origen: http://localhost:8080
+  web:
+    build: ./frontend
+    container_name: shopcart-web
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8080}:8080"
     restart: unless-stopped
 
 volumes:
