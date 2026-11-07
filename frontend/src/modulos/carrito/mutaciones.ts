@@ -1,10 +1,23 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { PREFIJO } from '@/api/claves';
 import { mensajeDeError } from '@/lib/errores';
 import { apiCarrito, type Carrito } from './api';
 import { useClaveCarrito } from './consultas';
 import { panelCarrito } from './panel-carrito';
+
+/**
+ * Guarda el carrito que devolvió la API. Antes cancela cualquier GET /carrito en curso: el aviso
+ * de inventario por WebSocket puede llegar antes que esta respuesta y disparar una consulta que,
+ * si terminara después, pisaría el carrito nuevo con uno viejo (o vacío, en el primer producto
+ * de un invitado, cuando todavía no tenía token).
+ */
+async function guardarCarrito(cliente: QueryClient, clave: readonly unknown[], carrito: Carrito) {
+  await cliente.cancelQueries({ queryKey: clave });
+  cliente.setQueryData(clave, carrito);
+  // Si había un checkout activo, la API lo canceló al cambiar el carrito
+  void cliente.invalidateQueries({ queryKey: [PREFIJO.checkout] });
+}
 
 /**
  * Todas las mutaciones del carrito devuelven el carrito completo ya recalculado por la API:
@@ -15,10 +28,8 @@ function useMutacionCarrito<V>(funcion: (variables: V) => Promise<Carrito>, mens
   const clave = useClaveCarrito();
   return useMutation({
     mutationFn: funcion,
-    onSuccess: (carrito) => {
-      cliente.setQueryData(clave, carrito);
-      // Si había un checkout activo, la API lo canceló al cambiar el carrito
-      void cliente.invalidateQueries({ queryKey: [PREFIJO.checkout] });
+    onSuccess: async (carrito) => {
+      await guardarCarrito(cliente, clave, carrito);
       if (mensajeExito) toast.success(mensajeExito);
     },
     onError: (error) => {
@@ -35,9 +46,8 @@ export function useAgregarAlCarrito() {
   return useMutation({
     mutationFn: ({ idVariante, cantidad }: { idVariante: number; cantidad: number }) =>
       apiCarrito.agregar(idVariante, cantidad),
-    onSuccess: (carrito) => {
-      cliente.setQueryData(clave, carrito);
-      void cliente.invalidateQueries({ queryKey: [PREFIJO.checkout] });
+    onSuccess: async (carrito) => {
+      await guardarCarrito(cliente, clave, carrito);
       panelCarrito.abrir();
     },
     onError: (error) => toast.error(mensajeDeError(error)),
@@ -62,9 +72,8 @@ export function useAplicarCupon() {
   const clave = useClaveCarrito();
   return useMutation({
     mutationFn: (codigo: string) => apiCarrito.aplicarCupon(codigo),
-    onSuccess: (carrito) => {
-      cliente.setQueryData(clave, carrito);
-      void cliente.invalidateQueries({ queryKey: [PREFIJO.checkout] });
+    onSuccess: async (carrito) => {
+      await guardarCarrito(cliente, clave, carrito);
       if (carrito.cupon?.aplicado) toast.success(`Cupón ${carrito.cupon.codigo} aplicado`);
     },
   });
