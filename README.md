@@ -332,7 +332,7 @@ Dentro de cada módulo: `api.ts` (llamadas y tipos) → hooks de TanStack Query 
    - Al cambiar de cuenta se reinician todas las consultas, para que nunca se vean datos de otra persona.
    - Las consultas privadas llevan el id del usuario en su clave.
    - Después del login solo se redirige a rutas internas.
-   - No se usa `dangerouslySetInnerHTML`.
+   - Ningún dato del usuario se inserta como HTML: React escapa todo el texto. El único `dangerouslySetInnerHTML` es el del componente de gráficas de shadcn, que inyecta CSS con los colores fijos definidos en el código.
    - nginx corre sin root, con CSP (`script-src 'self'`) y cabeceras de seguridad.
 10. **Responsive desde 375 px.**
     - Tablas del panel → tarjetas.
