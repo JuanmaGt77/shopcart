@@ -63,7 +63,7 @@ GO
 INSERT INTO dbo.MetodoEnvio (Codigo, Nombre, Descripcion, Costo, DiasEstimadosMin, DiasEstimadosMax) VALUES
     ('ESTANDAR', N'Envío estándar',    N'Entrega a domicilio en todo el país.',          35.00, 2, 4),
     ('EXPRESS',  N'Envío express',     N'Entrega al día siguiente en la ciudad capital.', 60.00, 1, 1),
-    ('TIENDA',   N'Recoger en tienda', N'Recógelo sin costo en cualquiera de nuestras tiendas.', 0.00, 1, 2);
+    ('TIENDA',   N'Recoger en estación', N'Recógelo sin costo en la estación de servicio que prefieras.', 0.00, 1, 2);
 GO
 
 INSERT INTO dbo.ParametroSistema (Clave, Valor, ValorMinimo, ValorMaximo, Descripcion) VALUES

@@ -1,6 +1,8 @@
 # ShopCart
 
-Plataforma web de ventas para el **Tech Challenge 360** de Grupo Pentandra. Una cadena de tiendas que hoy solo vende en sus puntos físicos quiere su tienda en línea: catálogo con variantes, carrito, cupones, checkout con pago, seguimiento de pedidos, inventario con kardex, reportes y bitácora.
+Plataforma web de ventas para el **Tech Challenge 360** de Grupo Pentandra. Una red de estaciones de servicio que hoy vende lubricantes, accesorios y productos de conveniencia solo en sus estaciones quiere su tienda en línea, con envío a domicilio o para **recoger en la estación**: catálogo con variantes, carrito, cupones, checkout con pago, seguimiento de pedidos, inventario con kardex, reportes y bitácora.
+
+> El catálogo está inspirado en lo que vende una red de estaciones en Guatemala, pero **los productos, precios y existencias son de referencia (inventados)** y las imágenes son genéricas: no se usan logos, fotos ni identidad de ninguna empresa. Las marcas de lubricantes aparecen solo como dato del producto. No se vende combustible ni nada con alcohol.
 
 Esta entrega corresponde a la **Fase 1: base de datos y backend**. El frontend en React llega en la fase 2; el backend ya deja listo todo lo que el frontend va a consumir (incluido el tiempo real por WebSocket).
 
@@ -124,14 +126,21 @@ Después: `cd backend && npm run dev`.
 
 Uso el dominio `.test` porque está reservado para pruebas (RFC 2606).
 
-**Las semillas incluyen:** 8 categorías, 33 productos con 211 variantes (talla, color o capacidad), 22 departamentos, 3 métodos de envío, ~320 pedidos de los últimos 90 días en todos los estados (con cancelaciones y devoluciones), carritos abandonados y estos cupones:
+**Las semillas incluyen:**
+
+- **8 categorías:** Ropa y mercancía, Aditivos y fluidos, Cuidado del vehículo, Lubricantes, Motos, Accesorios para auto, Snacks y dulces, y Bebidas y café.
+- **48 productos con 168 variantes.** Los atributos son talla, color, viscosidad, presentación, sabor, tipo, etc.
+- Un producto de edición limitada con 2 y 3 unidades, y uno descontinuado.
+- 22 departamentos y 3 métodos de envío: estándar, express y **recoger en estación**.
+- ~320 pedidos de los últimos 90 días en todos los estados, con cancelaciones y devoluciones.
+- Carritos abandonados y estos cupones:
 
 | Cupón | Para demostrar |
 |---|---|
 | `BIENVENIDA10` | 10 %, compra mínima Q100, un uso por cliente |
 | `AHORRA50` | Q50 fijos con compra mínima de Q300 |
-| `CALZADO15` | 15 % solo en la categoría Calzado (tope Q150) |
-| `AUDIO20` | 20 % solo en Audio, máximo 2 usos por cliente |
+| `LUBRICANTES15` | 15 % solo en la categoría Lubricantes (tope Q150) |
+| `MOTO20` | 20 % solo en Motos, máximo 2 usos por cliente |
 | `VERANO2025` | vencido |
 | `AGOTADO5` | ya alcanzó su límite de 5 usos |
 | `BLACKFRIDAY25` | programado, todavía no vigente |
@@ -320,7 +329,7 @@ erDiagram
 
 Algunos puntos del modelo:
 
-- **Producto vs. variante:** el producto es lo que se ve en el catálogo; la variante es lo que se vende, con su propio **SKU único, precio y existencia**. Los atributos (Talla, Color, Capacidad) están normalizados en `Atributo`/`AtributoValor` y una variante no puede tener dos valores del mismo atributo (`UNIQUE (IDVariante, IDAtributo)`).
+- **Producto vs. variante:** el producto es lo que se ve en el catálogo; la variante es lo que se vende, con su propio **SKU único, precio y existencia**. Los atributos (Talla, Color, Viscosidad, Presentación...) están normalizados en `Atributo`/`AtributoValor` y una variante no puede tener dos valores del mismo atributo (`UNIQUE (IDVariante, IDAtributo)`).
 - **Montos** en `DECIMAL(12,2)` y cantidades en `INT`. No hay ni un `FLOAT` ni `REAL`.
 - **Existencia física y reservada** en la variante; `Disponible = Existencia - Reservada` es una columna calculada persistida.
 - **El pedido es una foto**: guarda precio, descuento, SKU, nombre, categoría y dirección del momento de la compra. Editar un producto, una dirección o un precio no cambia pedidos anteriores.
@@ -354,7 +363,7 @@ stateDiagram-v2
 |---|---|---|
 | `PAGADO` | el pago se aprobó y el pedido espera preparación (estado inicial) | sí |
 | `EN_PREPARACION` | bodega lo está armando | sí |
-| `DESPACHADO` | salió con el transportista (o está listo en tienda) | sí |
+| `DESPACHADO` | salió con el transportista (o está listo para recoger en la estación) | sí |
 | `ENTREGADO` | el cliente lo recibió | sí |
 | `DEVUELTO_PARCIAL` | se devolvió parte; cuenta solo lo neto | sí (neto) |
 | `DEVUELTO` | se devolvió todo y se reembolsó el total | no |
@@ -504,13 +513,13 @@ El enunciado deja algunas cosas abiertas a propósito. Estas son las posturas qu
 3. **Precio y descuento congelados al iniciar el checkout.** Al pagar solo se vuelven a validar los recursos compartidos (unidades ya reservadas y usos del cupón). Si el cupón se agotó mientras el cliente pagaba, el pago se rechaza sin crear nada.
 4. **Si el carrito cambia con un checkout activo, ese checkout se cancela** y su reserva se libera: el resumen congelado ya no coincidiría con el carrito.
 5. **Cupones:** aplican solo a productos (no al envío); el monto mínimo se compara contra el subtotal del carrito; un cupón por categoría descuenta solo esas líneas; requieren sesión (por el límite por cliente). Si el pedido se cancela, el uso del cupón se devuelve; si se hace una devolución, no.
-6. **Devoluciones** las registra el operador o administrador al recibir el producto (en tiendas físicas así funciona). Reembolso proporcional al total de la línea (ya con su parte del descuento). Si se devuelve todo, también se reembolsa el envío.
+6. **Devoluciones** las registra el operador o administrador al recibir el producto (en las estaciones así funciona). Reembolso proporcional al total de la línea (ya con su parte del descuento). Si se devuelve todo, también se reembolsa el envío.
 7. **El cliente puede cancelar** mientras el pedido esté `PAGADO` o `EN_PREPARACION` ("mientras no haya sido despachado").
 8. **Invitados:** pueden armar carrito con un token (UUID); para pagar inician sesión y el carrito se fusiona (si al sumar se pasa de lo disponible, se ajusta).
 9. **Solo el rol Cliente compra.** El personal usa una cuenta de cliente si quiere comprar.
 10. **Recurso de otro cliente → 403** (como dice el criterio de aceptación); si el recurso no existe → 404. Los IDs son secuenciales, así que la existencia no es un secreto.
 11. **IVA 12 % incluido** en los precios; el pedido guarda el desglose `BaseImponible = ROUND(Total / 1.12, 2)` y `MontoIVA = Total - BaseImponible`.
-12. **Envío** con costo fijo por método (estándar Q35, express Q60, recoger en tienda Q0).
+12. **Envío** con costo fijo por método (estándar Q35, express Q60, recoger en estación Q0). Elegir la estación exacta necesitaría una tabla de estaciones; queda como mejora.
 13. **Pago simulado**: la pasarela valida Luhn y vencimiento, tiene tarjetas de prueba de rechazo y nunca guarda el número completo ni el CVV. En producción el orden sería autorizar → crear pedido → capturar.
 14. **Parámetros configurables** en `ParametroSistema` (duración de la reserva, horas para carrito abandonado, umbral de existencia baja), editables por el admin y con bitácora.
 15. **Categorías de un solo nivel** y un producto pertenece a una categoría.

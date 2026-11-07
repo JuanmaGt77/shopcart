@@ -33,7 +33,7 @@ describe('RF-02 Catálogo', () => {
     expect(guionBajo.status).toBe(200);
     expect(guionBajo.body.paginacion.totalRegistros).toBe(0);
 
-    // "%" solo encuentra el producto que de verdad tiene un % en su descripción ("100 % algodón")
+    // "%" solo encuentra el producto que de verdad tiene un % en su descripción ("Algodón peinado 100 %")
     const porcentaje = await api().get('/api/productos').query({ q: '%' });
     expect(porcentaje.body.paginacion.totalRegistros).toBe(1);
     expect(porcentaje.body.datos[0].descripcion).toContain('100 %');

@@ -113,7 +113,7 @@ describe('RF-05 Cupones', () => {
       ['BLACKFRIDAY25', 'CUPON_NO_VIGENTE', /todavía no está vigente/],
       ['BIENVENIDA10', 'CUPON_MONTO_MINIMO', /compra mínima de Q100\.00\. Te faltan Q40\.00/],
       ['PAUSADO10', 'CUPON_INACTIVO', /no está disponible/],
-      ['CALZADO15', 'CUPON_SIN_PRODUCTOS_ELEGIBLES', /solo aplica a productos de la categoría Calzado/],
+      ['LUBRICANTES15', 'CUPON_SIN_PRODUCTOS_ELEGIBLES', /solo aplica a productos de la categoría Lubricantes/],
       ['NOEXISTE99', 'CUPON_NO_EXISTE', /no existe/],
     ];
     for (const [codigo, error, mensaje] of casos) {
@@ -138,15 +138,15 @@ describe('RF-05 Cupones', () => {
   });
 
   it('un cupón por categoría solo descuenta los productos de esa categoría', async () => {
-    const calzado = await nuevoProducto(admin, { existencia: 5, precio: 200, idCategoria: 4 });
+    const aceite = await nuevoProducto(admin, { existencia: 5, precio: 200, idCategoria: 4 });
     const playera = await nuevoProducto(admin, { existencia: 5, precio: 100, idCategoria: 1 });
     const cliente = await nuevoCliente();
-    await agregarAlCarrito(cliente.token, calzado.idVariante, 1);
+    await agregarAlCarrito(cliente.token, aceite.idVariante, 1);
     await agregarAlCarrito(cliente.token, playera.idVariante, 1);
     const carrito = await api()
       .post('/api/carrito/cupon')
       .set('Authorization', `Bearer ${cliente.token}`)
-      .send({ codigo: 'CALZADO15' });
+      .send({ codigo: 'LUBRICANTES15' });
     expect(carrito.body.datos).toMatchObject({ subtotal: 300, descuento: 30, total: 270 });
   });
 

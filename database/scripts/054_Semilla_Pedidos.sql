@@ -286,7 +286,7 @@ BEGIN TRY
                         SET @Paso = DATEADD(HOUR, 26 * @Lento, @Fecha);
                         INSERT INTO dbo.PedidoHistorialEstado (IDPedido, IDEstadoAnterior, IDEstadoNuevo, IDUsuario, Comentario, Fecha)
                         VALUES (@IDPedido, @EstPrep, @EstDesp, @IDOperador,
-                                CASE WHEN @Envio = 'TIENDA' THEN N'Listo para recoger en tienda' ELSE N'Entregado al transportista' END, @Paso);
+                                CASE WHEN @Envio = 'TIENDA' THEN N'Listo para recoger en la estación' ELSE N'Entregado al transportista' END, @Paso);
                         SET @EstadoActual = @EstDesp;
                     END;
                     IF @EstadoActual = @EstDesp AND DATEADD(HOUR, 74 * @Lento, @Fecha) < @Ahora
