@@ -4,15 +4,24 @@ Plataforma web de ventas para el **Tech Challenge 360** de Grupo Pentandra. Una 
 
 > El catálogo está inspirado en lo que vende una red de estaciones en Guatemala, pero **los productos, precios y existencias son de referencia (inventados)** y las imágenes son genéricas: no se usan logos, fotos ni identidad de ninguna empresa. Las marcas de lubricantes aparecen solo como dato del producto. No se vende combustible ni nada con alcohol.
 
-Esta entrega corresponde a la **Fase 1: base de datos y backend**. El frontend en React llega en la fase 2; el backend ya deja listo todo lo que el frontend va a consumir (incluido el tiempo real por WebSocket).
+Este repositorio es el **proyecto completo**:
+
+- **Fase 1:** base de datos y backend.
+- **Fase 2:** frontend en React para los tres roles. El **cliente** compra; el **operador** prepara pedidos, registra devoluciones y lleva el inventario; el **administrador** además ve el dashboard en vivo y administra catálogo, cupones y usuarios.
 
 | | |
 |---|---|
 | Base de datos | SQL Server 2019+ (uso 2022 en Docker, con la base en **nivel de compatibilidad 150 = 2019**) |
 | Backend | Node.js 24 LTS, Express 5, TypeScript en modo `strict` |
 | Acceso a datos | **Exclusivamente stored procedures** (88 SPs). Cero SQL en el código del backend, sin ORM |
-| Pruebas | 72 pruebas de integración contra SQL Server real |
+| Frontend | React 19, TypeScript `strict`, Vite, Tailwind CSS + shadcn/ui, TanStack Query, Socket.IO |
+| Pruebas | 72 pruebas de integración del backend contra SQL Server real y 36 pruebas del frontend |
+| Tienda y panel | `http://localhost:8080` (Docker) o `http://localhost:5173` (desarrollo) |
 | Documentación de la API | Swagger en `http://localhost:3000/api/docs` |
+
+| Tienda | Dashboard en vivo | Seguimiento en el celular |
+|---|---|---|
+| ![Inicio de la tienda](docs/capturas/01-inicio.jpg) | ![Dashboard del administrador](docs/capturas/07-dashboard.jpg) | ![Pedido en el celular](docs/capturas/06-pedido-movil.jpg) |
 
 ---
 
@@ -21,16 +30,17 @@ Esta entrega corresponde a la **Fase 1: base de datos y backend**. El frontend e
 1. [Cómo levantarlo](#1-cómo-levantarlo)
 2. [Credenciales y datos de prueba](#2-credenciales-y-datos-de-prueba)
 3. [Pruebas automatizadas y demostraciones](#3-pruebas-automatizadas-y-demostraciones)
-4. [Arquitectura](#4-arquitectura)
-5. [Modelo de datos (diagrama entidad-relación)](#5-modelo-de-datos)
-6. [Ciclo de vida del pedido](#6-ciclo-de-vida-del-pedido)
-7. [Cómo se cumple cada regla del negocio](#7-cómo-se-cumple-cada-regla-del-negocio)
-8. [Seguridad](#8-seguridad)
-9. [Tiempo real](#9-tiempo-real)
-10. [API: endpoints, formato de respuestas y catálogo de errores](#10-api)
-11. [Decisiones técnicas y supuestos](#11-decisiones-técnicas-y-supuestos)
-12. [Estándar de nomenclatura](#12-estándar-de-nomenclatura)
-13. [Qué sigue / mejoras posibles](#13-qué-sigue--mejoras-posibles)
+4. [Frontend](#4-frontend)
+5. [Arquitectura](#5-arquitectura)
+6. [Modelo de datos (diagrama entidad-relación)](#6-modelo-de-datos)
+7. [Ciclo de vida del pedido](#7-ciclo-de-vida-del-pedido)
+8. [Cómo se cumple cada regla del negocio](#8-cómo-se-cumple-cada-regla-del-negocio)
+9. [Seguridad](#9-seguridad)
+10. [Tiempo real](#10-tiempo-real)
+11. [API: endpoints, formato de respuestas y catálogo de errores](#11-api)
+12. [Decisiones técnicas y supuestos](#12-decisiones-técnicas-y-supuestos)
+13. [Estándar de nomenclatura](#13-estándar-de-nomenclatura)
+14. [Qué sigue / mejoras posibles](#14-qué-sigue--mejoras-posibles)
 
 ---
 
@@ -52,21 +62,25 @@ Eso levanta, en este orden:
 1. **`db`**: SQL Server 2022 (espera a estar sano con un healthcheck).
 2. **`db-init`**: ejecuta en orden los scripts de `database/scripts/` (tablas, índices, funciones, vistas, triggers, SPs, permisos, semillas) y al final una **verificación de integridad** que detiene todo si algo no cuadra. Si la base ya existe no hace nada.
 3. **`api`**: la API en `http://localhost:3000`.
+4. **`web`**: el frontend compilado, servido por nginx en `http://localhost:8080`. nginx también reenvía `/api` y `/socket.io` a la API, así el navegador habla con un solo origen.
 
-En unos 30 segundos queda listo:
+En uno o dos minutos (la primera vez compila las imágenes) queda listo:
 
+- **Tienda y panel: <http://localhost:8080>**. En el login hay botones para entrar con las cuentas de prueba.
 - Swagger: <http://localhost:3000/api/docs>
 - Salud: <http://localhost:3000/api/salud>
 
 > El `.env.example` trae claves de ejemplo que funcionan para probar en local. Antes de publicar en cualquier lado cambia `DB_SA_PASSWORD`, `DB_APP_PASSWORD` y `JWT_ACCESS_SECRET` (la API avisa en el log si sigue el secreto de ejemplo).
 
-Para recrear la base desde cero (por ejemplo después de muchas pruebas):
+Para recrear la base desde cero (por ejemplo después de muchas pruebas o de correr las demos). La API se detiene primero porque mantiene conexiones abiertas a la base:
 
 ```bash
+docker compose stop web api
 docker compose run --rm db-init --reset
+docker compose up -d
 ```
 
-### Opción B: base en Docker y API en local (desarrollo)
+### Opción B: base en Docker y API y frontend en local (desarrollo)
 
 ```bash
 cp .env.example .env
@@ -76,7 +90,14 @@ cd backend
 cp .env.example .env      # las claves por defecto coinciden con las del .env de la raíz
 npm install
 npm run dev               # http://localhost:3000 con recarga automática
+
+# en otra terminal
+cd frontend
+npm install
+npm run dev               # http://localhost:5173; Vite reenvía /api y /socket.io a la API
 ```
+
+Si la API corre en otro puerto, copia `frontend/.env.example` a `frontend/.env` y cambia `API_PROXY_TARGET`.
 
 ### Opción C: con un SQL Server propio (sin Docker)
 
@@ -112,6 +133,15 @@ Después: `cd backend && npm run dev`.
 | `npm run demo:idempotencia` | Demo: doble clic al pagar |
 | `npm run demo:cupon` | Demo: cupón con límite usado en paralelo |
 | `npm run realtime:escuchar` | Muestra en vivo los eventos del WebSocket |
+
+### Comandos útiles del frontend
+
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Tienda y panel en `http://localhost:5173` con recarga automática |
+| `npm run build` / `npm run preview` | Compila a `dist/` (con revisión de tipos) y lo sirve para probarlo |
+| `npm test` | Pruebas unitarias con Vitest |
+| `npm run typecheck` / `npm run lint` / `npm run format` | TypeScript estricto, Oxlint y Prettier |
 
 ---
 
@@ -189,12 +219,149 @@ Y para mostrar que **la base protege las reglas aunque alguien se salte la API**
 | `03_PermisosUsuarioAplicacion.sql` | el usuario de la API solo puede ejecutar SPs: no puede leer tablas ni borrar la bitácora |
 | `04_ConcurrenciaUltimaUnidad.sql` | la prueba de la última unidad a mano con dos ventanas de SSMS |
 
+### Pruebas del frontend (`cd frontend && npm test`)
+
+36 pruebas con Vitest sobre la lógica que decide lo importante:
+
+| Archivo | Qué comprueba |
+|---|---|
+| `api/cliente.test.ts` | Varias peticiones con el token vencido al mismo tiempo: el token se **renueva una sola vez** y todas se repiten. Además: sesión revocada cierra la sesión, errores por campo y filtros vacíos fuera de la URL |
+| `checkout/checkout.test.ts` | **Idempotency-Key estable** en reintentos por red o 5xx y nueva solo cuando la API rechazó el intento; validación de tarjeta (Luhn, vencimiento) y formatos |
+| `catalogo/seleccion-variante.test.ts` | Selector de variantes: valores en orden de alta, combinaciones agotadas o inexistentes y ajuste automático |
+| `catalogo/admin/combinaciones.test.ts` | Generador de variantes del administrador: combinaciones y SKU válidos (sin tildes, ¼, ×) |
+| `auth/destino.test.ts` | Después del login solo se redirige a rutas internas (sin redirección abierta) y cada rol va a su área |
+| `reportes/series.test.ts`, `lib/*.test.ts`, `bitacora/comparar.test.ts` | Días sin ventas en cero, montos en quetzales, fechas en hora de Guatemala, paginación y comparación de la bitácora |
+
+### Guion de demostración en el navegador
+
+Con todo levantado (`http://localhost:8080`):
+
+1. **Compra completa:**
+   - Como visitante, agrega un aceite al carrito.
+   - Al pagar te pide iniciar sesión (botón *Cliente*); el carrito de invitado se pasa a la cuenta.
+   - Elige **Recoger en estación** y aparta los productos: corre la **reserva de 15 minutos**.
+   - Paga primero con la tarjeta *Rechazada* (se muestra el motivo) y luego con *Aprobada*.
+2. **Tiempo real:**
+   - Abre el panel en otra ventana como *Admin*: el dashboard y el inventario cambian solos con cada compra.
+   - Como *Operador*, avanza el pedido a *En preparación*: el cliente ve moverse la línea de tiempo sin recargar.
+3. **Cupones:**
+   - `BIENVENIDA10` con un carrito chico muestra cuánto falta para el mínimo.
+   - `LUBRICANTES15` solo descuenta los lubricantes.
+4. **Doble clic en Pagar:** el botón se bloquea y, aunque llegara dos veces, la `Idempotency-Key` es la misma (un pedido, un cobro).
+5. **Última unidad:** la *Playera conmemorativa* tiene 2 y 3 unidades. Dos clientes la apartan a la vez: uno pasa y el otro recibe el mensaje de existencia.
+6. **Desactivar a un usuario:** el admin desactiva a una clienta conectada y su sesión se cierra al instante con un aviso.
+7. **Celular:** todo funciona en 375 px. Las tablas del panel se vuelven tarjetas, y el menú y los filtros se abren en un panel lateral.
+
 ---
 
-## 4. Arquitectura
+## 4. Frontend
+
+| Catálogo | Carrito | Checkout con reserva |
+|---|---|---|
+| ![Catálogo filtrado por Lubricantes](docs/capturas/02-catalogo.jpg) | ![Carrito lateral](docs/capturas/03-carrito.jpg) | ![Pago con la reserva de 15 minutos](docs/capturas/05-checkout.jpg) |
+
+| Pedidos (operador) | Detalle del pedido (operador) | Producto (administrador) |
+|---|---|---|
+| ![Pedidos del panel](docs/capturas/08-pedidos-panel.jpg) | ![Detalle del pedido con acciones](docs/capturas/09-pedido-panel.jpg) | ![Editor de producto](docs/capturas/10-producto-admin.jpg) |
+
+### Pantallas por rol
+
+| Rol | Pantallas |
+|---|---|
+| Visitante | Inicio, catálogo con búsqueda y filtros, detalle con selector de variantes, carrito de invitado, login y registro |
+| Cliente | Lo anterior, más: checkout (dirección, envío, reserva, pago), mis pedidos con seguimiento en vivo y cancelación, mis direcciones y mi perfil |
+| Operador | Pedidos (filtros, cambios de estado, cancelación, devoluciones), inventario con movimientos, kardex y conciliación |
+| Administrador | Todo lo del operador, más: dashboard en vivo, productos y precios, categorías, cupones, usuarios, bitácora y parámetros |
+
+El menú y las rutas siguen el mismo acceso por rol que la API. El operador no ve el dashboard ni la administración, y el personal no compra con su cuenta de trabajo. **Quien decide es la API**: el frontend solo evita mostrar pantallas que de todos modos responderían 403.
+
+### Cómo está organizado
+
+Cada módulo del frontend se llama igual que su módulo del backend, así una funcionalidad se sigue de punta a punta:
 
 ```
-Cliente HTTP / WebSocket
+frontend/src/
+├── api/              cliente HTTP ({ datos } / { error }, renovación del token, errores tipados) y claves de caché
+├── app/              proveedores, router (rutas por rol, carga diferida), layouts de la tienda y del panel
+├── tiempo-real/      conexión Socket.IO y sincronizador: cada evento -> la consulta que se refresca
+├── modulos/          auth, catalogo (y catalogo/admin), carrito, checkout, cuenta, direcciones, pedidos
+│                     (y pedidos/panel), inventario, cupones, usuarios, reportes, bitacora, sistema
+├── components/       ui/ (shadcn/ui: el código vive en el repo) y compartidos (tabla responsiva, paginador, estados)
+├── hooks/  lib/      filtros en la URL, formatos de quetzales y fechas en hora de Guatemala
+```
+
+Dentro de cada módulo: `api.ts` (llamadas y tipos) → hooks de TanStack Query → componentes y páginas.
+
+### Librerías y por qué
+
+| Librería | Para qué | Por qué esta |
+|---|---|---|
+| React 19 + Vite 8 | interfaz y compilación | lo pide el reto (React 18+); Vite da recarga instantánea y un proxy para hablar con la API desde el mismo origen |
+| TypeScript `strict` | tipos | las mismas reglas que el backend (`noUncheckedIndexedAccess`, etc.) |
+| React Router 8 | rutas | rutas anidadas por rol y carga diferida de cada área |
+| TanStack Query | datos del servidor | caché, estados de carga y error, reintentos; los eventos del WebSocket solo invalidan la consulta afectada |
+| Tailwind CSS 4 + shadcn/ui (Radix) | interfaz | componentes accesibles (teclado, foco, lectores de pantalla) cuyo código queda en el repo y se puede leer; responsive con utilidades |
+| React Hook Form + Zod | formularios | validan con las mismas reglas que la API y pintan en cada campo los errores que devuelve |
+| socket.io-client | tiempo real | el mismo protocolo del servidor, con reconexión |
+| Recharts | gráficas del dashboard | se carga solo cuando el administrador abre el dashboard |
+| Vitest + Testing Library, Oxlint, Prettier | calidad | pruebas rápidas en TypeScript, linter con reglas de hooks y accesibilidad, formato uniforme |
+
+### Decisiones del frontend
+
+1. **Un solo origen.** En desarrollo Vite reenvía `/api` y `/socket.io` a la API, y en Docker lo hace nginx. El navegador nunca hace peticiones a otro dominio: no hay CORS, y la cookie `httpOnly` + `SameSite=Strict` del refresh token funciona sin cambiar el backend.
+2. **El access token vive solo en memoria**, nunca en `localStorage`, así un script inyectado no tiene de dónde robarlo.
+   - Al recargar la página, la sesión se recupera con `/api/auth/refresh` y la cookie.
+   - Se renueva un minuto antes de vencer. Si una petición recibe `401 TOKEN_EXPIRADO`, se renueva **una sola vez** aunque fallen varias peticiones a la vez, y se repiten.
+   - Las pestañas se avisan entre sí (BroadcastChannel) al iniciar o cerrar sesión, y el WebSocket se reconecta con el token nuevo.
+3. **El frontend no calcula dinero.** Subtotal, descuento, envío, IVA y total salen siempre de la API, que los calcula en SQL Server con `DECIMAL`. El frontend solo les da formato (`Q1,234.50`). Por eso, antes de apartar los productos, el total con envío no se muestra sumado.
+4. **Pago idempotente.**
+   - Cada intento de pago lleva una `Idempotency-Key` (UUID).
+   - Si se corta la red o el servidor responde 5xx, el reintento usa **la misma** clave: no sabemos si se cobró y la API devuelve el mismo pedido.
+   - Solo después de un rechazo definitivo (4xx, por ejemplo tarjeta rechazada) se genera una nueva.
+   - El botón se bloquea mientras procesa.
+5. **Reserva de 15 minutos.**
+   - El contador usa los `segundosRestantes` que manda el servidor, no el reloj de la computadora del cliente.
+   - El checkout queda en la URL para no perderse al recargar.
+   - Si llega el evento `checkout:expirado` o el contador llega a cero, se avisa y se puede volver a intentar.
+6. **Filtros en la URL** (`?q=aceite&idCategoria=4&pagina=2`) y **paginación del servidor** en todos los listados: se pueden compartir, el botón Atrás funciona y nunca se descarga una tabla completa.
+7. **Tiempo real en un solo lugar** (`tiempo-real/sincronizador.tsx`). Traduce cada evento a la consulta que hay que refrescar (tabla en la [sección 10](#10-tiempo-real)), y las pantallas solo leen sus datos.
+   - **Carrera resuelta:** el aviso de inventario por WebSocket puede llegar antes que la respuesta HTTP de agregar al carrito. Por eso cada mutación del carrito cancela las consultas en curso antes de guardar su respuesta, para que una respuesta vieja no la pise.
+8. **Los botones de estado del pedido salen de la base.** El panel lee las transiciones permitidas (`/api/catalogos/estados-pedido`, tabla `EstadoPedidoTransicion`) en lugar de tenerlas fijas en el código.
+9. **Seguridad en el navegador:**
+   - Al cambiar de cuenta se reinician todas las consultas, para que nunca se vean datos de otra persona.
+   - Las consultas privadas llevan el id del usuario en su clave.
+   - Después del login solo se redirige a rutas internas.
+   - No se usa `dangerouslySetInnerHTML`.
+   - nginx corre sin root, con CSP (`script-src 'self'`) y cabeceras de seguridad.
+10. **Responsive desde 375 px.**
+    - Tablas del panel → tarjetas.
+    - Menú lateral y filtros → paneles deslizables.
+    - Carrito en un panel lateral.
+    - Botones de compra de 44 px de alto.
+11. **Accesibilidad:**
+    - Componentes de Radix, etiquetas en todos los campos y foco visible.
+    - Enlace "Saltar al contenido".
+    - `aria-live` en existencias, contador y avisos.
+    - Los estados nunca se indican solo con color: llevan texto.
+12. **Rendimiento:**
+    - Cada área (checkout, cuenta, panel, dashboard) se descarga solo al abrirla, y React va en un archivo aparte que el navegador guarda en caché.
+    - Al paginar se conserva la página anterior mientras llega la siguiente (sin parpadeo).
+    - Las imágenes del catálogo cargan de forma diferida.
+13. **Gráficas del dashboard:**
+    - Una sola serie por gráfica.
+    - Colores validados de contraste y daltonismo en modo claro y oscuro.
+    - Las ventas en el tiempo tienen vista de tabla; las barras de categorías muestran su monto.
+14. **Imágenes genéricas** (con el nombre del producto). Si una URL no carga, se muestra el ícono de la categoría.
+
+---
+
+## 5. Arquitectura
+
+```
+Navegador: React (tienda, mi cuenta y panel) ── HTTP /api + WebSocket /socket.io
+        │
+        ▼
+nginx (Docker) o Vite (desarrollo): sirve el frontend y reenvía /api y /socket.io (un solo origen)
         │
         ▼
 ┌───────────────────────────── API (Express 5 + TypeScript) ─────────────────────────────┐
@@ -220,7 +387,7 @@ Los errores de cualquier capa llegan a un **manejador central** que siempre resp
 
 ```
 shopcart/
-├── docker-compose.yml          SQL Server + creación de la base + API
+├── docker-compose.yml          SQL Server + creación de la base + API + frontend (nginx)
 ├── .env.example
 ├── database/
 │   ├── scripts/                34 scripts numerados (se ejecutan en orden)
@@ -245,7 +412,11 @@ shopcart/
 │   ├── tests/                  pruebas de integración
 │   ├── scripts/                db-setup y demos
 │   └── Dockerfile
-└── docs/                       diagrama ER y diagrama de estados (Mermaid, SVG y PNG)
+├── frontend/                   React + TypeScript (detalle en la sección 4)
+│   ├── src/                    api, app, tiempo-real, modulos, components, hooks, lib
+│   ├── nginx.conf              sirve el build, reenvía /api y /socket.io, cabeceras de seguridad y CSP
+│   └── Dockerfile              compilación con Node y nginx sin root
+└── docs/                       diagrama ER, diagrama de estados y capturas
 ```
 
 ### Librerías y por qué
@@ -265,7 +436,7 @@ shopcart/
 
 ---
 
-## 5. Modelo de datos
+## 6. Modelo de datos
 
 ![Diagrama entidad-relación](docs/diagrama-er.png)
 
@@ -339,7 +510,7 @@ Algunos puntos del modelo:
 
 ---
 
-## 6. Ciclo de vida del pedido
+## 7. Ciclo de vida del pedido
 
 ![Estados del pedido](docs/estados-pedido.png)
 
@@ -376,7 +547,7 @@ stateDiagram-v2
 
 ---
 
-## 7. Cómo se cumple cada regla del negocio
+## 8. Cómo se cumple cada regla del negocio
 
 | Regla | Cómo lo resolví | Dónde |
 |---|---|---|
@@ -399,7 +570,7 @@ stateDiagram-v2
 
 ---
 
-## 8. Seguridad
+## 9. Seguridad
 
 ### SQL injection: ni una línea de SQL en el backend
 
@@ -432,7 +603,7 @@ stateDiagram-v2
 
 ---
 
-## 9. Tiempo real
+## 10. Tiempo real
 
 Socket.IO en el mismo puerto de la API. El cliente se conecta con `io('http://localhost:3000', { auth: { token } })`; sin token entra como visitante.
 
@@ -450,9 +621,26 @@ Socket.IO en el mismo puerto de la API. El cliente se conecta con `io('http://lo
 
 Los eventos se emiten **después** de que la base confirmó la transacción, así nadie se entera de algo que se revirtió.
 
+**En el frontend:**
+
+- Hay una sola conexión, en el mismo origen (`/socket.io`), con el token en el handshake.
+- Se reconecta al iniciar o cerrar sesión y cuando el token se renueva.
+- `tiempo-real/sincronizador.tsx` traduce cada evento a la consulta de TanStack Query que hay que refrescar:
+
+| Evento | Qué se actualiza en pantalla |
+|---|---|
+| `inventario:existencia` | lo disponible en el catálogo, el detalle (al instante, sin pedirlo de nuevo), el carrito y el inventario del panel |
+| `catalogo:actualizado` | catálogo, detalle y categorías |
+| `pedido:creado` | listas de pedidos, con aviso "Nuevo pedido" al personal |
+| `pedido:estado` | el detalle y la línea de tiempo del pedido, con aviso al cliente |
+| `dashboard:actualizar` | indicadores y gráficas del dashboard |
+| `carrito:actualizado` | el carrito en las otras pestañas del cliente |
+| `checkout:expirado` | el checkout pasa a "Tu reserva venció" |
+| `sesion:revocada` | se cierra la sesión y se manda al login con aviso |
+
 ---
 
-## 10. API
+## 11. API
 
 Documentación interactiva completa en **`/api/docs`** (OpenAPI 3.1 generado desde los mismos esquemas de validación; también en `/api/openapi.json`). Para probar rutas protegidas: `POST /api/auth/login`, copia el `accessToken` y pégalo en **Authorize**.
 
@@ -504,7 +692,7 @@ Los SPs lanzan errores de negocio con `THROW` y un número propio; `db/errores-b
 
 ---
 
-## 11. Decisiones técnicas y supuestos
+## 12. Decisiones técnicas y supuestos
 
 El enunciado deja algunas cosas abiertas a propósito. Estas son las posturas que tomé:
 
@@ -531,7 +719,7 @@ El enunciado deja algunas cosas abiertas a propósito. Estas son las posturas qu
 
 ---
 
-## 12. Estándar de nomenclatura
+## 13. Estándar de nomenclatura
 
 | Objeto | Formato | Ejemplos en el proyecto |
 |---|---|---|
@@ -547,10 +735,13 @@ Todos los objetos se crean con scripts escritos a mano; no hay ORM.
 
 ---
 
-## 13. Qué sigue / mejoras posibles
+## 14. Qué sigue / mejoras posibles
 
-- **Fase 2:** frontend en React + TypeScript (responsive, rutas por rol, tablas con paginación del servidor, gráficas del dashboard conectadas al WebSocket, renovación transparente del token).
 - Exportar reportes a Excel/PDF.
+- Elegir la estación exacta para recoger (necesita una tabla de estaciones con horarios y existencia por estación).
+- Vender combustible, vales prepagados o servicios: no tienen envío, kardex ni devolución por línea como un producto, así que requieren su propio modelo.
+- Modo oscuro con selector (los colores ya están definidos para los dos modos, incluidas las gráficas).
+- Pruebas de punta a punta en el navegador con Playwright dentro del pipeline (el flujo de compra, el tiempo real y la revocación de sesión ya se probaron así durante el desarrollo).
 - Búsqueda con Full-Text Search de SQL Server cuando el catálogo crezca.
 - Redis para caché, rate limit y Socket.IO si se corren varias instancias.
 - Pasarela de pago real con autorización/captura y webhooks.
