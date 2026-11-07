@@ -5,7 +5,11 @@
  * La API siempre responde con el mismo formato:
  *   éxito   -> { datos } o { datos, paginacion }
  *   error   -> { error: { codigo, mensaje, detalles?, idSolicitud } }
+ *
+ * Si una petición con sesión recibe 401 porque el access token venció, se renueva el token
+ * (una sola vez aunque fallen varias peticiones a la vez) y se repite la petición original.
  */
+import { almacenSesion, renovarSesion } from '@/modulos/auth/almacen-sesion';
 
 export interface Paginacion {
   pagina: number;
@@ -17,6 +21,11 @@ export interface Paginacion {
 export interface RespuestaPaginada<T> {
   datos: T[];
   paginacion: Paginacion;
+}
+
+export interface DetalleValidacion {
+  campo: string;
+  mensaje: string;
 }
 
 interface CuerpoError {
@@ -38,6 +47,37 @@ export class ErrorApi extends Error {
     this.detalles = detalles;
     this.idSolicitud = idSolicitud;
   }
+
+  /** Errores de validación por campo (400 VALIDACION): [{ campo, mensaje }] */
+  get erroresDeCampo(): DetalleValidacion[] {
+    if (!Array.isArray(this.detalles)) return [];
+    return this.detalles.filter(
+      (d): d is DetalleValidacion =>
+        typeof d === 'object' && d !== null && 'campo' in d && 'mensaje' in d && typeof d.campo === 'string',
+    );
+  }
+}
+
+type ValorConsulta = string | number | boolean | null | undefined;
+
+export interface OpcionesSolicitud {
+  metodo?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  cuerpo?: unknown;
+  consulta?: Record<string, ValorConsulta>;
+  encabezados?: Record<string, string>;
+  senal?: AbortSignal;
+}
+
+/** Códigos 401 que se arreglan pidiendo un access token nuevo con el refresh token. */
+const CODIGOS_RENOVABLES = new Set(['TOKEN_EXPIRADO', 'TOKEN_INVALIDO']);
+
+function construirUrl(ruta: string, consulta?: Record<string, ValorConsulta>): string {
+  const parametros = new URLSearchParams();
+  for (const [clave, valor] of Object.entries(consulta ?? {})) {
+    if (valor !== undefined && valor !== null && valor !== '') parametros.set(clave, String(valor));
+  }
+  const texto = parametros.toString();
+  return `/api${ruta}${texto ? `?${texto}` : ''}`;
 }
 
 async function leerError(respuesta: Response): Promise<ErrorApi> {
@@ -51,13 +91,58 @@ async function leerError(respuesta: Response): Promise<ErrorApi> {
   );
 }
 
-/** GET sin sesión que devuelve `datos`. La versión con token y renovación llega con el módulo de autenticación. */
-export async function obtenerPublico<T>(ruta: string, senal?: AbortSignal): Promise<T> {
-  const respuesta = await fetch(`/api${ruta}`, {
-    signal: senal ?? null,
-    headers: { Accept: 'application/json' },
-  });
+async function ejecutar(ruta: string, opciones: OpcionesSolicitud, esReintento = false): Promise<Response> {
+  const encabezados = new Headers({ Accept: 'application/json', ...opciones.encabezados });
+  if (opciones.cuerpo !== undefined) encabezados.set('Content-Type', 'application/json');
+  const token = almacenSesion.token();
+  if (token) encabezados.set('Authorization', `Bearer ${token}`);
+
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(construirUrl(ruta, opciones.consulta), {
+      method: opciones.metodo ?? 'GET',
+      headers: encabezados,
+      body: opciones.cuerpo === undefined ? null : JSON.stringify(opciones.cuerpo),
+      signal: opciones.senal ?? null,
+      credentials: 'same-origin',
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error;
+    throw new ErrorApi(
+      0,
+      'SIN_CONEXION',
+      'No hay conexión con el servidor. Revisa tu internet e intenta de nuevo.',
+    );
+  }
+
+  if (respuesta.status === 401 && token && !esReintento) {
+    const error = await leerError(respuesta.clone());
+    if (CODIGOS_RENOVABLES.has(error.codigo) && (await renovarSesion())) {
+      return ejecutar(ruta, opciones, true);
+    }
+    // Sesión revocada (cuenta desactivada) o refresh vencido: se cierra la sesión en el navegador
+    almacenSesion.limpiar(error.codigo === 'SESION_REVOCADA' ? 'revocada' : 'expirada');
+  }
+  return respuesta;
+}
+
+async function solicitarCuerpo<C>(ruta: string, opciones: OpcionesSolicitud): Promise<C> {
+  const respuesta = await ejecutar(ruta, opciones);
   if (!respuesta.ok) throw await leerError(respuesta);
-  const cuerpo = (await respuesta.json()) as { datos: T };
-  return cuerpo.datos;
+  if (respuesta.status === 204) return undefined as C;
+  return (await respuesta.json()) as C;
+}
+
+/** Llama la API y devuelve `datos`. */
+export async function pedir<T>(ruta: string, opciones: OpcionesSolicitud = {}): Promise<T> {
+  const cuerpo = await solicitarCuerpo<{ datos: T } | undefined>(ruta, opciones);
+  return cuerpo?.datos as T;
+}
+
+/** Llama un listado paginado del servidor y devuelve `{ datos, paginacion }`. */
+export function pedirPaginado<T>(
+  ruta: string,
+  opciones: OpcionesSolicitud = {},
+): Promise<RespuestaPaginada<T>> {
+  return solicitarCuerpo<RespuestaPaginada<T>>(ruta, opciones);
 }

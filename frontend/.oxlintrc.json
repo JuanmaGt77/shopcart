@@ -8,6 +8,7 @@
     "react/only-export-components": ["warn", { "allowConstantExport": true }],
     "typescript/consistent-type-imports": "error",
     "typescript/no-explicit-any": "error",
-    "no-console": ["warn", { "allow": ["warn", "error"] }]
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "jsx-a11y/prefer-tag-over-role": "off"
   }
 }

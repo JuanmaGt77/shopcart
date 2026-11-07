@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { CircleCheck, CircleX, ShoppingCart } from 'lucide-react';
-import { obtenerPublico } from '@/api/cliente';
+import { pedir } from '@/api/cliente';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
@@ -16,7 +16,7 @@ interface Salud {
 export function PaginaEstadoEntorno() {
   const salud = useQuery({
     queryKey: ['salud'],
-    queryFn: ({ signal }) => obtenerPublico<Salud>('/salud', signal),
+    queryFn: ({ signal }) => pedir<Salud>('/salud', { senal: signal }),
     refetchInterval: 10_000,
   });
 
