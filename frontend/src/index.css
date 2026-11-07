@@ -80,11 +80,12 @@
   --border: oklch(0.915 0.01 262);
   --input: oklch(0.915 0.01 262);
   --ring: oklch(0.55 0.16 263);
-  --chart-1: oklch(0.4 0.16 263);
-  --chart-2: oklch(0.57 0.22 27);
-  --chart-3: oklch(0.62 0.12 235);
-  --chart-4: oklch(0.72 0.15 75);
-  --chart-5: oklch(0.55 0.11 165);
+  /* Gráficas: paleta categórica validada (orden fijo, contraste y daltonismo) con el validador de dataviz */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
   --radius: 0.625rem;
   --sidebar: oklch(0.975 0.006 262);
   --sidebar-foreground: oklch(0.2 0.03 262);
@@ -119,11 +120,11 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.6 0.12 263);
-  --chart-1: oklch(0.72 0.13 263);
-  --chart-2: oklch(0.68 0.19 27);
-  --chart-3: oklch(0.74 0.1 235);
-  --chart-4: oklch(0.8 0.14 75);
-  --chart-5: oklch(0.7 0.11 165);
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
   --sidebar: oklch(0.2 0.025 262);
   --sidebar-foreground: oklch(0.97 0.005 262);
   --sidebar-primary: oklch(0.72 0.13 263);
