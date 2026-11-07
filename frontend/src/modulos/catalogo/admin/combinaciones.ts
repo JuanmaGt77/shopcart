@@ -18,15 +18,17 @@ export interface VarianteNueva {
 
 /** "¼ galón" -> "025GALON", "5W-30" -> "5W30", "Limón y sal" -> "LIMONYSAL" */
 export function codigoParaSku(valor: string): string {
-  return valor
-    .replace(/¼/g, '025')
-    .replace(/½/g, '05')
-    .replace(/×/g, 'X')
-    .normalize('NFD')
-    // Quita las tildes (marcas diacríticas que separa NFD): "galón" -> "galon"
-    .replace(/\p{Diacritic}/gu, '')
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '');
+  return (
+    valor
+      .replace(/¼/g, '025')
+      .replace(/½/g, '05')
+      .replace(/×/g, 'X')
+      .normalize('NFD')
+      // Quita las tildes (marcas diacríticas que separa NFD): "galón" -> "galon"
+      .replace(/\p{Diacritic}/gu, '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+  );
 }
 
 /** "Talla: S, M , L" escrito por el usuario -> ["S", "M", "L"] sin vacíos ni repetidos */

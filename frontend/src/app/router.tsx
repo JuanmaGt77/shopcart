@@ -4,18 +4,10 @@ import { LayoutTienda } from '@/app/layouts/layout-tienda';
 import { InicioPanel } from '@/app/inicio-panel';
 import { PaginaNoEncontrada } from '@/app/pagina-no-encontrada';
 import { RequiereRol } from '@/modulos/auth/componentes/requiere-rol';
-import { PaginaLogin } from '@/modulos/auth/paginas/pagina-login';
-import { PaginaRegistro } from '@/modulos/auth/paginas/pagina-registro';
 import { PaginaCarrito } from '@/modulos/carrito/paginas/pagina-carrito';
 import { PaginaCatalogo } from '@/modulos/catalogo/paginas/pagina-catalogo';
 import { PaginaInicio } from '@/modulos/catalogo/paginas/pagina-inicio';
 import { PaginaProducto } from '@/modulos/catalogo/paginas/pagina-producto';
-import { PaginaCheckout } from '@/modulos/checkout/paginas/pagina-checkout';
-import { LayoutCuenta } from '@/modulos/cuenta/layout-cuenta';
-import { PaginaDirecciones } from '@/modulos/cuenta/pagina-direcciones';
-import { PaginaMiPedido } from '@/modulos/cuenta/pagina-mi-pedido';
-import { PaginaMisPedidos } from '@/modulos/cuenta/pagina-mis-pedidos';
-import { PaginaPerfil } from '@/modulos/cuenta/pagina-perfil';
 
 const PERSONAL = ['OPERADOR', 'ADMIN'] as const;
 const SOLO_CLIENTE = ['CLIENTE'] as const;
@@ -38,24 +30,57 @@ export const router = createBrowserRouter([
       {
         element: <RequiereRol roles={SOLO_CLIENTE} />,
         children: [
-          { path: 'checkout', element: <PaginaCheckout /> },
+          {
+            path: 'checkout',
+            lazy: () =>
+              import('@/modulos/checkout/paginas/pagina-checkout').then((m) => ({
+                Component: m.PaginaCheckout,
+              })),
+          },
           {
             path: 'cuenta',
-            element: <LayoutCuenta />,
+            lazy: () => import('@/modulos/cuenta/layout-cuenta').then((m) => ({ Component: m.LayoutCuenta })),
             children: [
               { index: true, element: <Navigate to="pedidos" replace /> },
-              { path: 'pedidos', element: <PaginaMisPedidos /> },
-              { path: 'pedidos/:idPedido', element: <PaginaMiPedido /> },
-              { path: 'direcciones', element: <PaginaDirecciones /> },
-              { path: 'perfil', element: <PaginaPerfil /> },
+              {
+                path: 'pedidos',
+                lazy: () =>
+                  import('@/modulos/cuenta/pagina-mis-pedidos').then((m) => ({
+                    Component: m.PaginaMisPedidos,
+                  })),
+              },
+              {
+                path: 'pedidos/:idPedido',
+                lazy: () =>
+                  import('@/modulos/cuenta/pagina-mi-pedido').then((m) => ({ Component: m.PaginaMiPedido })),
+              },
+              {
+                path: 'direcciones',
+                lazy: () =>
+                  import('@/modulos/cuenta/pagina-direcciones').then((m) => ({
+                    Component: m.PaginaDirecciones,
+                  })),
+              },
+              {
+                path: 'perfil',
+                lazy: () =>
+                  import('@/modulos/cuenta/pagina-perfil').then((m) => ({ Component: m.PaginaPerfil })),
+              },
             ],
           },
         ],
       },
     ],
   },
-  { path: 'login', element: <PaginaLogin /> },
-  { path: 'registro', element: <PaginaRegistro /> },
+  {
+    path: 'login',
+    lazy: () => import('@/modulos/auth/paginas/pagina-login').then((m) => ({ Component: m.PaginaLogin })),
+  },
+  {
+    path: 'registro',
+    lazy: () =>
+      import('@/modulos/auth/paginas/pagina-registro').then((m) => ({ Component: m.PaginaRegistro })),
+  },
   {
     path: 'panel',
     element: <RequiereRol roles={PERSONAL} />,

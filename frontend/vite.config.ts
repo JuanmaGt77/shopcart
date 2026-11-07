@@ -23,5 +23,16 @@ export default defineConfig(({ mode }) => {
     },
     server: { port: 5173, strictPort: true, proxy },
     preview: { port: 4173, strictPort: true, proxy },
+    build: {
+      rolldownOptions: {
+        output: {
+          // React cambia poco: en su propio archivo, el navegador lo conserva en caché entre versiones.
+          // Recharts no se agrupa: queda dentro del dashboard, que solo descarga el administrador.
+          codeSplitting: {
+            groups: [{ name: 'react', test: /[\\/]node_modules[\\/](react|react-dom|react-router|scheduler)[\\/]/ }],
+          },
+        },
+      },
+    },
   };
 });
