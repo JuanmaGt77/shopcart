@@ -93,7 +93,7 @@ export function LayoutPanel() {
   return (
     <SidebarProvider>
       <MenuPanel />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
           <SidebarTrigger className="-ml-1" aria-label="Mostrar u ocultar el menú" />
           <Separator orientation="vertical" className="mr-1 data-[orientation=vertical]:h-5" />
@@ -108,7 +108,7 @@ export function LayoutPanel() {
             <MenuUsuario enPanel />
           </div>
         </header>
-        <div className="flex-1 p-4 sm:p-6">
+        <div className="min-w-0 flex-1 p-4 sm:p-6">
           <Outlet />
         </div>
       </SidebarInset>

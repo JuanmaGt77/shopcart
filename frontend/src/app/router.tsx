@@ -19,6 +19,7 @@ import { PaginaPerfil } from '@/modulos/cuenta/pagina-perfil';
 
 const PERSONAL = ['OPERADOR', 'ADMIN'] as const;
 const SOLO_CLIENTE = ['CLIENTE'] as const;
+const SOLO_ADMIN = ['ADMIN'] as const;
 
 /**
  * Rutas de la aplicación.
@@ -100,6 +101,62 @@ export const router = createBrowserRouter([
               import('@/modulos/inventario/pagina-conciliacion').then((m) => ({
                 Component: m.PaginaConciliacion,
               })),
+          },
+          {
+            // Administración: solo el rol ADMIN (la API también lo exige en cada endpoint)
+            element: <RequiereRol roles={SOLO_ADMIN} />,
+            children: [
+              {
+                path: 'productos',
+                handle: { titulo: 'Productos' },
+                lazy: () =>
+                  import('@/modulos/catalogo/admin/pagina-productos-admin').then((m) => ({
+                    Component: m.PaginaProductosAdmin,
+                  })),
+              },
+              {
+                path: 'productos/:idProducto',
+                handle: { titulo: 'Producto' },
+                lazy: () =>
+                  import('@/modulos/catalogo/admin/pagina-producto-admin').then((m) => ({
+                    Component: m.PaginaProductoAdmin,
+                  })),
+              },
+              {
+                path: 'categorias',
+                handle: { titulo: 'Categorías' },
+                lazy: () =>
+                  import('@/modulos/catalogo/admin/pagina-categorias').then((m) => ({
+                    Component: m.PaginaCategorias,
+                  })),
+              },
+              {
+                path: 'cupones',
+                handle: { titulo: 'Cupones' },
+                lazy: () =>
+                  import('@/modulos/cupones/pagina-cupones').then((m) => ({ Component: m.PaginaCupones })),
+              },
+              {
+                path: 'usuarios',
+                handle: { titulo: 'Usuarios' },
+                lazy: () =>
+                  import('@/modulos/usuarios/pagina-usuarios').then((m) => ({ Component: m.PaginaUsuarios })),
+              },
+              {
+                path: 'bitacora',
+                handle: { titulo: 'Bitácora' },
+                lazy: () =>
+                  import('@/modulos/bitacora/pagina-bitacora').then((m) => ({ Component: m.PaginaBitacora })),
+              },
+              {
+                path: 'parametros',
+                handle: { titulo: 'Parámetros del sistema' },
+                lazy: () =>
+                  import('@/modulos/sistema/pagina-parametros').then((m) => ({
+                    Component: m.PaginaParametros,
+                  })),
+              },
+            ],
           },
         ],
       },
