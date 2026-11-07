@@ -45,3 +45,26 @@ export function textoDias(minimo: number, maximo: number): string {
   if (minimo === maximo) return `${minimo} ${minimo === 1 ? 'día' : 'días'}`;
   return `${minimo} a ${maximo} días`;
 }
+
+export interface EstadoPedidoConTransiciones {
+  idEstadoPedido: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string | null;
+  esInicial: boolean;
+  esFinal: boolean;
+  cuentaComoVenta: boolean;
+  orden: number;
+  /** Transiciones permitidas (tabla EstadoPedidoTransicion). */
+  siguientes: { codigo: string; nombre: string }[];
+}
+
+/** Estados con sus transiciones permitidas: los botones del panel salen de aquí, no de una lista fija. */
+export function useEstadosPedido() {
+  return useQuery({
+    queryKey: [PREFIJO.sistema, 'estados-pedido'],
+    queryFn: ({ signal }) =>
+      pedir<EstadoPedidoConTransiciones[]>('/catalogos/estados-pedido', { senal: signal }),
+    staleTime: 60 * 60_000,
+  });
+}

@@ -36,7 +36,7 @@ export function DialogoCancelar({
     mutationFn: () => apiPedidos.cancelar(pedido.idPedido, motivo.trim()),
     onSuccess: () => {
       toast.success(`Pedido ${pedido.numeroPedido} cancelado`, {
-        description: `Reembolsamos ${formatearQuetzales(pedido.total)} a tu tarjeta.`,
+        description: `Se reembolsaron ${formatearQuetzales(pedido.total)} a la tarjeta.`,
       });
       void cliente.invalidateQueries({ queryKey: [PREFIJO.pedido] });
       void cliente.invalidateQueries({ queryKey: [PREFIJO.pedidos] });
@@ -54,7 +54,7 @@ export function DialogoCancelar({
           <DialogTitle>¿Cancelar el pedido {pedido.numeroPedido}?</DialogTitle>
           <DialogDescription>
             Se reembolsa el total ({formatearQuetzales(pedido.total)}), los productos vuelven al inventario y,
-            si usaste un cupón, puedes volver a usarlo. No se puede deshacer.
+            si se usó un cupón, vuelve a quedar disponible. No se puede deshacer.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">

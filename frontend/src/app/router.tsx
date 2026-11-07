@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 import { LayoutPanel } from '@/app/layouts/layout-panel';
 import { LayoutTienda } from '@/app/layouts/layout-tienda';
-import { PaginaEstadoEntorno } from '@/app/pagina-estado-entorno';
+import { InicioPanel } from '@/app/inicio-panel';
 import { PaginaNoEncontrada } from '@/app/pagina-no-encontrada';
 import { RequiereRol } from '@/modulos/auth/componentes/requiere-rol';
 import { PaginaLogin } from '@/modulos/auth/paginas/pagina-login';
@@ -61,7 +61,47 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <LayoutPanel />,
-        children: [{ index: true, handle: { titulo: 'Panel' }, element: <PaginaEstadoEntorno /> }],
+        children: [
+          { index: true, handle: { titulo: 'Dashboard' }, element: <InicioPanel /> },
+          {
+            path: 'pedidos',
+            handle: { titulo: 'Pedidos' },
+            lazy: () =>
+              import('@/modulos/pedidos/panel/pagina-pedidos-panel').then((m) => ({
+                Component: m.PaginaPedidosPanel,
+              })),
+          },
+          {
+            path: 'pedidos/:idPedido',
+            handle: { titulo: 'Detalle del pedido' },
+            lazy: () =>
+              import('@/modulos/pedidos/panel/pagina-pedido-panel').then((m) => ({
+                Component: m.PaginaPedidoPanel,
+              })),
+          },
+          {
+            path: 'inventario',
+            handle: { titulo: 'Inventario' },
+            lazy: () =>
+              import('@/modulos/inventario/pagina-existencias').then((m) => ({
+                Component: m.PaginaExistencias,
+              })),
+          },
+          {
+            path: 'inventario/kardex',
+            handle: { titulo: 'Kardex' },
+            lazy: () =>
+              import('@/modulos/inventario/pagina-kardex').then((m) => ({ Component: m.PaginaKardex })),
+          },
+          {
+            path: 'inventario/conciliacion',
+            handle: { titulo: 'Conciliación de inventario' },
+            lazy: () =>
+              import('@/modulos/inventario/pagina-conciliacion').then((m) => ({
+                Component: m.PaginaConciliacion,
+              })),
+          },
+        ],
       },
     ],
   },
