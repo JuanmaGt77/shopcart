@@ -42,6 +42,9 @@ export interface Variante {
   sku: string;
   precio: number;
   disponible: number;
+  /** Solo para el personal */
+  existencia?: number;
+  reservada?: number;
   activo: boolean;
   /** "Color: Azul / Talla: L" */
   descripcionVariante: string | null;
