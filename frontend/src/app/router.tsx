@@ -6,6 +6,9 @@ import { PaginaNoEncontrada } from '@/app/pagina-no-encontrada';
 import { RequiereRol } from '@/modulos/auth/componentes/requiere-rol';
 import { PaginaLogin } from '@/modulos/auth/paginas/pagina-login';
 import { PaginaRegistro } from '@/modulos/auth/paginas/pagina-registro';
+import { PaginaCatalogo } from '@/modulos/catalogo/paginas/pagina-catalogo';
+import { PaginaInicio } from '@/modulos/catalogo/paginas/pagina-inicio';
+import { PaginaProducto } from '@/modulos/catalogo/paginas/pagina-producto';
 
 const PERSONAL = ['OPERADOR', 'ADMIN'] as const;
 
@@ -18,7 +21,11 @@ const PERSONAL = ['OPERADOR', 'ADMIN'] as const;
 export const router = createBrowserRouter([
   {
     element: <LayoutTienda />,
-    children: [{ index: true, element: <PaginaEstadoEntorno /> }],
+    children: [
+      { index: true, element: <PaginaInicio /> },
+      { path: 'productos', element: <PaginaCatalogo /> },
+      { path: 'productos/:idProducto', element: <PaginaProducto /> },
+    ],
   },
   { path: 'login', element: <PaginaLogin /> },
   { path: 'registro', element: <PaginaRegistro /> },
