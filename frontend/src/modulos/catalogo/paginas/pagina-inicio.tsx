@@ -31,7 +31,7 @@ export function PaginaInicio() {
 
   return (
     <div className="space-y-14 pb-6">
-      <section className="relative overflow-hidden bg-primary text-primary-foreground">
+      <section className="relative overflow-hidden bg-marca text-marca-foreground">
         <div
           className="pointer-events-none absolute -top-32 right-0 size-[28rem] rounded-full bg-white/10 blur-3xl"
           aria-hidden
@@ -48,7 +48,7 @@ export function PaginaInicio() {
             <h1 className="max-w-xl text-4xl leading-[1.1] font-bold tracking-tight text-balance sm:text-5xl">
               Todo para tu ruta, sin hacer fila.
             </h1>
-            <p className="max-w-lg text-lg text-primary-foreground/85">
+            <p className="max-w-lg text-lg text-marca-foreground/85">
               Aceites, aditivos, accesorios y algo para el camino. Te lo enviamos o lo recoges en la estación.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -67,7 +67,7 @@ export function PaginaInicio() {
               <li key={titulo} className="rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
                 <Icono className="mb-2 size-6" aria-hidden />
                 <p className="font-semibold">{titulo}</p>
-                <p className="text-sm text-primary-foreground/80">{texto}</p>
+                <p className="text-sm text-marca-foreground/80">{texto}</p>
               </li>
             ))}
           </ul>

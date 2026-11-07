@@ -33,6 +33,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { SelectorTema } from '@/components/compartidos/selector-tema';
 import { MenuUsuario } from '@/modulos/auth/componentes/menu-usuario';
 import type { Rol } from '@/modulos/auth/tipos';
 import { NOMBRE_ROL } from '@/modulos/auth/tipos';
@@ -105,6 +106,7 @@ export function LayoutPanel() {
                 <Store /> Tienda
               </Link>
             </Button>
+            <SelectorTema />
             <MenuUsuario enPanel />
           </div>
         </header>

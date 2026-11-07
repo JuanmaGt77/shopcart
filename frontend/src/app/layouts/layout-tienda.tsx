@@ -11,6 +11,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { SelectorTema } from '@/components/compartidos/selector-tema';
 import { MenuUsuario } from '@/modulos/auth/componentes/menu-usuario';
 import { esPersonal } from '@/modulos/auth/tipos';
 import { useSesion } from '@/modulos/auth/use-sesion';
@@ -32,7 +33,7 @@ export function LayoutTienda() {
       >
         Saltar al contenido
       </a>
-      <div className="bg-primary px-4 py-1.5 text-center text-xs text-primary-foreground sm:text-sm">
+      <div className="bg-marca px-4 py-1.5 text-center text-xs text-marca-foreground sm:text-sm">
         <Truck className="mr-1.5 inline size-4 align-text-bottom" aria-hidden />
         Envío a todo el país o <strong>recoge gratis en la estación</strong>. Primera compra: usa{' '}
         <strong className="font-mono">BIENVENIDA10</strong>
@@ -53,6 +54,7 @@ export function LayoutTienda() {
             ) : (
               <BotonCarrito />
             )}
+            <SelectorTema />
             <MenuUsuario />
           </div>
         </div>

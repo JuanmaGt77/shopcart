@@ -30,6 +30,8 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-marca: var(--marca);
+  --color-marca-foreground: var(--marca-foreground);
   --color-promo: var(--promo);
   --color-promo-foreground: var(--promo-foreground);
   --color-exito: var(--exito);
@@ -73,6 +75,9 @@
   --accent: oklch(0.955 0.012 262);
   --accent-foreground: oklch(0.3 0.08 263);
   --destructive: oklch(0.577 0.245 27.325);
+  /* Azul de marca: franjas y portadas; se queda profundo también en modo oscuro */
+  --marca: oklch(0.4 0.16 263);
+  --marca-foreground: oklch(0.985 0 0);
   --promo: oklch(0.57 0.22 27);
   --promo-foreground: oklch(0.985 0 0);
   --exito: oklch(0.55 0.14 155);
@@ -113,6 +118,8 @@
   --accent: oklch(0.28 0.03 262);
   --accent-foreground: oklch(0.97 0.005 262);
   --destructive: oklch(0.704 0.191 22.216);
+  --marca: oklch(0.32 0.12 263);
+  --marca-foreground: oklch(0.97 0.005 262);
   --promo: oklch(0.68 0.19 27);
   --promo-foreground: oklch(0.15 0.02 27);
   --exito: oklch(0.7 0.14 155);
