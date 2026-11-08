@@ -28,7 +28,7 @@ export function ImagenProducto({
     return (
       <div
         className={cn(
-          'flex aspect-square items-center justify-center bg-gradient-to-br from-secondary to-muted text-primary/40',
+          'flex aspect-square items-center justify-center bg-linear-to-br from-secondary to-muted text-primary/40',
           className,
         )}
         role="img"
