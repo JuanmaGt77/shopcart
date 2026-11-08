@@ -11,7 +11,10 @@ interface ImagenProductoProps {
   prioridad?: boolean;
 }
 
-/** Imagen cuadrada del producto. Si no hay URL o no carga, muestra el ícono de su categoría. */
+/**
+ * Imagen cuadrada del producto. Se muestra completa sobre fondo blanco (object-contain): los empaques
+ * altos, como una botella de aceite, no se recortan. Si no hay URL o no carga, muestra el ícono de su categoría.
+ */
 export function ImagenProducto({
   url,
   alt,
@@ -45,7 +48,7 @@ export function ImagenProducto({
       width={800}
       height={800}
       onError={() => setFallo(true)}
-      className={cn('aspect-square w-full bg-muted object-cover', className)}
+      className={cn('aspect-square w-full bg-white object-contain', className)}
     />
   );
 }
