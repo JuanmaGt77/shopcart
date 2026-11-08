@@ -159,11 +159,11 @@ RETURN
             WHEN 'CUPON_LIMITE_CLIENTE' THEN CONCAT(N'Ya usaste el cupón ', b.Codigo, N' la cantidad máxima de veces permitida (',
                                                     b.LimiteUsosPorCliente, N').')
             WHEN 'CUPON_MONTO_MINIMO' THEN CONCAT(N'El cupón ', b.Codigo, N' requiere una compra mínima de Q',
-                                                  CONVERT(VARCHAR(20), CAST(b.MontoMinimo AS MONEY), 1), N'. Te faltan Q',
-                                                  CONVERT(VARCHAR(20), CAST(b.MontoMinimo - b.SubtotalCarrito AS MONEY), 1), N'.')
+                                                  FORMAT(b.MontoMinimo, 'N2', 'en-US'), N'. Te faltan Q',
+                                                  FORMAT(b.MontoMinimo - b.SubtotalCarrito, 'N2', 'en-US'), N'.')
             WHEN 'CUPON_SIN_PRODUCTOS' THEN CONCAT(N'El cupón ', b.Codigo, N' solo aplica a productos de la categoría ',
                                                    b.NombreCategoria, N' y tu carrito no tiene ninguno.')
-            ELSE CONCAT(N'Cupón ', b.Codigo, N' aplicado: ahorras Q', CONVERT(VARCHAR(20), CAST(d.Descuento AS MONEY), 1), N'.')
+            ELSE CONCAT(N'Cupón ', b.Codigo, N' aplicado: ahorras Q', FORMAT(d.Descuento, 'N2', 'en-US'), N'.')
         END AS NVARCHAR(300)),
         b.SubtotalCarrito,
         b.SubtotalElegible,
