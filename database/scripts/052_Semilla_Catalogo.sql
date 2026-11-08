@@ -13,8 +13,13 @@
    La existencia inicial entra al kardex como ENTRADA_COMPRA hace 100 días, así
    la existencia siempre coincide con la suma de movimientos.
 
-   Las imágenes son genéricas (placehold.co con el nombre del producto y los
-   colores de su categoría): no se usan fotos, logos ni empaques de ninguna marca.
+   Cada producto lleva una foto de referencia enlazada por URL (no se copia al
+   repositorio): empaques oficiales o de tiendas en línea para los productos de
+   marca (Castrol, Havoline, Petronas, Repsol, Bardahl) y fotos de Unsplash o de
+   tiendas para los de marca propia. Ninguna sale del sitio de Don Arturo. Si un
+   producto no tiene foto, se genera una genérica en placehold.co con su nombre y
+   los colores de su categoría; la tienda también muestra un respaldo si la foto
+   deja de cargar.
    ============================================================================= */
 SET NOCOUNT ON;
 SET QUOTED_IDENTIFIER ON;
@@ -80,7 +85,7 @@ INSERT INTO @Productos VALUES
  ( 3, 'SUDCAP', 1, N'Sudadera con capucha', N'ShopCart', N'Felpa por dentro, bolsa canguro y capucha ajustable para las mañanas frías.', N'Sudadera|con capucha', 189.00, N'Talla', N'S,M,L,XL', N'Color', N'Azul,Gris'),
  ( 4, 'TERACE', 1, N'Termo de acero inoxidable', N'ShopCart', N'Doble pared al vacío: mantiene el café caliente 12 horas y el agua fría 24.', N'Termo de|acero inoxidable', 119.00, N'Capacidad', N'500 ml:119,750 ml:139', N'Color', N'Azul,Negro'),
  -- 2. Aditivos y fluidos
- ( 5, 'ADIINY', 2, N'Aditivo limpiador de inyectores', N'ShopCart Pro', N'Limpia inyectores y válvulas en motores de gasolina. Una botella por tanque lleno.', N'Limpiador de|inyectores', 45.00, N'Presentación', N'150 ml:45,350 ml:85', NULL, NULL),
+ ( 5, 'ADIINY', 2, N'Aditivo limpiador de inyectores', N'Bardahl', N'Limpia inyectores y válvulas en motores de gasolina. Una botella por tanque lleno.', N'Limpiador de|inyectores', 45.00, N'Presentación', N'150 ml:45,350 ml:85', NULL, NULL),
  ( 6, 'ADIDIE', 2, N'Aditivo para motor diésel', N'ShopCart Pro', N'Mejora la combustión, reduce el humo negro y protege la bomba de inyección.', N'Aditivo|diésel', 49.00, N'Presentación', N'150 ml:49,350 ml:89', NULL, NULL),
  ( 7, 'FLUREF', 2, N'Refrigerante anticongelante', N'Havoline', N'Listo para usar. Evita el sobrecalentamiento y protege el radiador de la corrosión.', N'Refrigerante', 39.00, N'Presentación', N'¼ galón:39,1 galón:115', N'Tipo', N'Verde,Rosado'),
  ( 8, 'FLUFRE', 2, N'Líquido de frenos', N'Castrol', N'Alto punto de ebullición para un frenado seguro. Revisa en tu manual si usa DOT 3 o DOT 4.', N'Líquido|de frenos', 35.00, N'Presentación', N'350 ml:35,1 litro:95', N'Tipo', N'DOT 3,DOT 4'),
@@ -159,25 +164,73 @@ INNER JOIN @Categorias k   ON k.Orden = p.Categoria
 INNER JOIN dbo.Categoria c ON c.Nombre = k.Nombre
 ORDER BY p.Clave;
 
--- Dos imágenes genéricas por producto: el nombre en los colores de la categoría y la marca en colores invertidos
+-- Foto de referencia de cada producto (ver el encabezado)
+DECLARE @Fotos TABLE (Codigo CHAR(6) PRIMARY KEY, Url NVARCHAR(500) NOT NULL);
+INSERT INTO @Fotos VALUES
+    ('PLABAS', N'https://images.unsplash.com/photo-1651761179569-4ba2aa054997?w=800&h=800&fit=crop&q=80'),
+    ('GORTRU', N'https://images.unsplash.com/photo-1620231109648-302d034cb29b?w=800&h=800&fit=crop&q=80'),
+    ('SUDCAP', N'https://images.unsplash.com/photo-1655141559697-f927ed68170c?w=800&h=800&fit=crop&q=80'),
+    ('TERACE', N'https://images.unsplash.com/photo-1730703136456-8bffc44d835c?w=800&h=800&fit=crop&q=80'),
+    ('ADIINY', N'https://cdn.webshopapp.com/shops/11913/files/489817202/bardahl-fuel-injector-cleaner-300ml.jpg'),
+    ('ADIDIE', N'https://5.imimg.com/data5/SELLER/Default/2024/6/426290781/EB/WX/AE/55822066/abro-diesel-fuel-treatment-additive-1000x1000.jpg'),
+    ('FLUREF', N'https://i5.walmartimages.com/seo/HAVOLINE-Xtended-Life-Antifreeze-Coolant-Pre-mix-50-50-1-Gallon-Pack-of-6-236543486_da9f8a50-7727-4931-bc4f-d952fa695248.d6f904685c8cc059a8f173dfbc3c1a12.jpeg'),
+    ('FLUFRE', N'https://www.castrol.com/content/dam/castrol/country-sites-new/id_id/indonesia/home/products/castrol-brake-fluid-dot4-2000x2000px.png'),
+    ('FLULIM', N'https://i.etsystatic.com/63791007/r/il/3acb6d/7603011697/il_794xN.7603011697_m2xb.jpg'),
+    ('FLUATF', N'https://autoparts.az/image/cache/catalog/product/9ggN89hp5m88WXMQy-1000x1000.jpg'),
+    ('CUISHA', N'https://tuning-mania.com/wp-content/uploads/2024/02/mafra-car-wash-shampoo-wax.jpg'),
+    ('CUICER', N'https://www.mbsomaha.com/img/inventory/large/2096.jpg'),
+    ('CUILLA', N'https://m.media-amazon.com/images/I/61eoDzCi2hL._SL1500_.jpg'),
+    ('CUIARO', N'https://images.unsplash.com/photo-1793690807352-04423426292a?w=800&h=800&fit=crop&q=80'),
+    ('CUITOA', N'https://images.unsplash.com/photo-1761934658331-2e00b20dc6c6?w=800&h=800&fit=crop&q=80'),
+    ('CUITAB', N'https://media.diy.com/is/image/KingfisherDigital/flash-car-dashboard-cockpit-cleaner-interior-plastic-shine-spray-3x500ml~5056820572628_02c_MP?$MOB_PREV$&$width=600&$height=600'),
+    ('LUBMIN', N'https://repuestosvolkswagen.com.co/761-thickbox_default/cuarto-aceite-20w-50.jpg'),
+    ('LUBSEM', N'https://www.elfabatteries.gr/image/cache/catalog/LIPANTIKA/CATEGORY/10W40/CASTROL 10W40 MAGNATEC 1L-1000x1000.jpg'),
+    ('LUBSIN', N'https://farmacar.net/wp-content/uploads/PETRONAS-5W30-3000-FR-1L.png'),
+    ('LUBALT', N'https://i5.walmartimages.com/seo/Chevron-Havoline-High-Mileage-Synthetic-Blend-Motor-Oil-5W20-1-Quart-bottle_4edad5b4-2688-48bc-8dc0-c1382619ee7e.bca83d6ae211e286f8208cb57219bba8.jpeg?odnHeight=784&odnWidth=580&odnBg=FFFFFF'),
+    ('LUBDIE', N'https://kywiec.vtexassets.com/arquivos/ids/198201/428094.jpg?v=638524164075600000'),
+    ('LUBPRE', N'https://lubricants.repsol.com/content/dam/repsol-lubricantes/es/productos-y-servicios/lubricantes-imagenes/elite-competicion-5W-40-v2.jpg'),
+    ('LUBM4T', N'https://lubricants.repsol.com/content/dam/repsol-lubricantes/es/productos-y-servicios/lubricantes-imagenes/RIDER-4T-20W-50-1L.jpg'),
+    ('LUBM2T', N'https://lubricantesweb.es/tienda/18126-thickbox_default/cepsa-moto-2t-universal-1ltr.jpg'),
+    ('LUBMON', N'https://img.pacifiko.com/PROD/resize/1/1000x1000/_1729115868.png'),
+    ('MOTCAI', N'https://images.unsplash.com/photo-1611004061262-3a925aa7fc31?w=800&h=800&fit=crop&q=80'),
+    ('MOTCAA', N'https://motorivista.com/wp-content/uploads/2023/04/Screenshot-2023-04-27-at-4.42.13-pm.png'),
+    ('MOTGUA', N'https://i5.walmartimages.com/seo/Gloves-Motorcycle-Gloves-Touchscreen-Riding-Gloves-Suitable-for-9-5-To-10cm-Palm-Width-Racing-Motocross-Riding-Bike-Gloves-One-Pair-Winter-Gloves_621d5633-e4d0-4156-a611-5b4da8b1bf02.90a82776a1e639728a9f92e0c8207478.jpeg'),
+    ('MOTIMP', N'https://http2.mlstatic.com/D_NQ_NP_811706-MLM50322046985_062022-O.webp'),
+    ('MOTCHA', N'https://images.unsplash.com/photo-1662309376159-b95fb193d96b?w=800&h=800&fit=crop&q=80'),
+    ('MOTCAN', N'https://m.media-amazon.com/images/I/71uuxppUZoL._AC_.jpg'),
+    ('ACCCAR', N'https://www.calmemobiles.com/wp-content/uploads/2023/03/DSC01633.png'),
+    ('ACCSOP', N'https://images.unsplash.com/photo-1764347923709-fc48487f2486?w=800&h=800&fit=crop&q=80'),
+    ('ACCCAB', N'https://images.unsplash.com/photo-1597766370173-a14200ec0b42?w=800&h=800&fit=crop&q=80'),
+    ('ACCKIT', N'https://m.media-amazon.com/images/I/71pn0KexFeL._AC_.jpg'),
+    ('ACCINF', N'https://m.media-amazon.com/images/I/61+H07XRuyL._AC_SL1500_.jpg'),
+    ('ACCPAR', N'https://m.media-amazon.com/images/I/61Fd7wZe3AL._AC_SL1500_.jpg'),
+    ('SNAMAN', N'https://images.unsplash.com/photo-1549978113-29eb25c8177f?w=800&h=800&fit=crop&q=80'),
+    ('SNAPLA', N'https://images.unsplash.com/photo-1649431473478-2768c3f21c6d?w=800&h=800&fit=crop&q=80'),
+    ('SNADUL', N'https://growingupbilingual.com/wp-content/uploads/2021/09/20160914000236_IMG_7748.jpg'),
+    ('SNAGAL', N'https://images.unsplash.com/photo-1559622214-f8a9850965bb?w=800&h=800&fit=crop&q=80'),
+    ('SNAGRA', N'https://images.unsplash.com/photo-1633360821154-1935fb5671e6?w=800&h=800&fit=crop&q=80'),
+    ('BEBCAF', N'https://images.unsplash.com/photo-1510776537653-6d0da167186c?w=800&h=800&fit=crop&q=80'),
+    ('BEBAGU', N'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=800&h=800&fit=crop&q=80'),
+    ('BEBHID', N'https://images.unsplash.com/photo-1545334894-9c7a7ccefaf8?w=800&h=800&fit=crop&q=80'),
+    ('BEBCFR', N'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=800&h=800&fit=crop&q=80'),
+    ('BEBENE', N'https://images.unsplash.com/photo-1765278339412-b3d507bcb796?w=800&h=800&fit=crop&q=80');
+
+-- Una imagen por producto: su foto o, si no tiene, una genérica con el nombre en los colores de la categoría
 INSERT INTO dbo.ProductoImagen (IDProducto, Url, TextoAlternativo, Orden)
 SELECT pr.IDProducto,
-       CONCAT(N'https://placehold.co/800x800/',
-              CASE n.Orden WHEN 0 THEN k.Fondo ELSE k.Texto END, N'/',
-              CASE n.Orden WHEN 0 THEN k.Texto ELSE k.Fondo END,
-              N'/png?font=montserrat&text=', u.Texto),
-       CASE n.Orden WHEN 0 THEN p.Nombre ELSE CONCAT(p.Nombre, N' · ', p.Marca) END,
-       n.Orden
+       COALESCE(f.Url, CONCAT(N'https://placehold.co/800x800/', k.Fondo, N'/', k.Texto, N'/png?font=montserrat&text=', u.Texto)),
+       p.Nombre,
+       0
 FROM @Productos p
 INNER JOIN dbo.Producto pr ON pr.Nombre = p.Nombre
 INNER JOIN @Categorias k   ON k.Orden = p.Categoria
-CROSS JOIN (VALUES (0), (1)) AS n (Orden)
-CROSS APPLY (SELECT Texto = CASE n.Orden WHEN 0 THEN p.Etiqueta ELSE p.Marca END COLLATE Latin1_General_100_BIN2) t
+LEFT JOIN @Fotos f         ON f.Codigo = p.Codigo
+CROSS APPLY (SELECT Texto = p.Etiqueta COLLATE Latin1_General_100_BIN2) t
 -- Codificación para la URL; la intercalación binaria evita que 'é' se trate igual que 'e'
 CROSS APPLY (SELECT Texto =
-    REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+    REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
         t.Texto, N' ', N'%20'), N'|', N'%5Cn'), N'á', N'%C3%A1'), N'é', N'%C3%A9'), N'í', N'%C3%AD'),
-        N'ó', N'%C3%B3'), N'ú', N'%C3%BA'), N'ñ', N'%C3%B1'), N'"', N'%22'), N'·', N'%C2%B7')) u;
+        N'ó', N'%C3%B3'), N'ú', N'%C3%BA'), N'ñ', N'%C3%B1'), N'"', N'%22')) u;
 
 /* 3. Variantes -------------------------------------------------------------------
    PosA y PosB conservan el orden en que se escribieron los valores (S, M, L, XL). */
@@ -276,7 +329,7 @@ FROM dbo.Categoria WHERE Nombre = N'Ropa y mercancía';
 SET @IDLimitada = SCOPE_IDENTITY();
 
 INSERT INTO dbo.ProductoImagen (IDProducto, Url, TextoAlternativo, Orden)
-VALUES (@IDLimitada, N'https://placehold.co/800x800/1d3f9e/f5c518/png?font=montserrat&text=Edici%C3%B3n%5Cnlimitada', N'Playera conmemorativa edición limitada', 0);
+VALUES (@IDLimitada, N'https://images.unsplash.com/photo-1657364890995-1ec4bb3aefcf?w=800&h=800&fit=crop&q=80', N'Playera conmemorativa edición limitada', 0);
 
 INSERT INTO dbo.Variante (IDProducto, SKU, Precio, FechaCreacion)
 VALUES (@IDLimitada, 'PLAQDO-NEG-M', 149.00, @FechaAlta), (@IDLimitada, 'PLAQDO-NEG-L', 149.00, @FechaAlta);
