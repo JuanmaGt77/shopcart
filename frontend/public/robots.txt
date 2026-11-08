@@ -1,0 +1,7 @@
+# La tienda es pública; el panel, la cuenta, el carrito, el checkout y la API no se indexan.
+User-agent: *
+Disallow: /panel
+Disallow: /cuenta
+Disallow: /carrito
+Disallow: /checkout
+Disallow: /api/
