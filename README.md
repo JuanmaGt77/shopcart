@@ -2,7 +2,7 @@
 
 Plataforma web de ventas para el **Tech Challenge 360** de Grupo Pentandra. Una red de estaciones de servicio que hoy vende lubricantes, accesorios y productos de conveniencia solo en sus estaciones quiere su tienda en línea, con envío a domicilio o para **recoger en la estación**: catálogo con variantes, carrito, cupones, checkout con pago, seguimiento de pedidos, inventario con kardex, reportes y bitácora.
 
-> El catálogo está inspirado en lo que vende una red de estaciones en Guatemala, pero **los productos, precios y existencias son de referencia (inventados)** y las imágenes son genéricas: no se usan logos, fotos ni identidad de ninguna empresa. Las marcas de lubricantes aparecen solo como dato del producto. No se vende combustible ni nada con alcohol.
+> El catálogo está inspirado en lo que vende una red de estaciones en Guatemala, pero **los productos, precios y existencias son de referencia (inventados)** y no se usan el logo, las fotos ni la identidad de esa empresa. Cada producto muestra una foto de referencia enlazada por URL: el empaque real para los de marca (Castrol, Havoline, Petronas, Repsol, Bardahl), tomado del fabricante o de tiendas en línea, y fotos de Unsplash o de tiendas para los de marca propia. Las fotos no se copian al repositorio. No se vende combustible ni nada con alcohol.
 
 Este repositorio es el **proyecto completo**:
 
@@ -352,7 +352,7 @@ Dentro de cada módulo: `api.ts` (llamadas y tipos) → hooks de TanStack Query 
     - Una sola serie por gráfica.
     - Colores validados de contraste y daltonismo en modo claro y oscuro.
     - Las ventas en el tiempo tienen vista de tabla; las barras de categorías muestran su monto.
-14. **Imágenes genéricas** (con el nombre del producto). Si una URL no carga, se muestra el ícono de la categoría.
+14. **Fotos de referencia por URL** (ver la nota del inicio). Si una URL externa deja de cargar, se muestra el ícono de la categoría y el administrador puede cambiarla desde el editor del producto. Un producto sin foto recibe en la semilla una imagen genérica con su nombre.
 15. **Modo oscuro** (claro, oscuro o como el sistema). `public/tema.js` aplica el tema antes de pintar, sin parpadeo. Es un archivo propio y no un script en línea porque la CSP solo permite scripts del mismo origen.
 16. **Exportar a CSV** las ventas, las categorías y el top 10 del rango elegido. Se arma en el navegador con las mismas cifras que devolvió la API, con BOM para que Excel lea las tildes. Los textos que empiezan con `=`, `+`, `-` o `@` se neutralizan para que Excel no los ejecute como fórmula.
 
